@@ -58,35 +58,73 @@ app.post('/api/portfolio/summary', async (req, res) => {
         if (dbError || !dbData) return res.status(404).json({ error: "Portfolio not found." });
 
         const aggregated = {};
-        let totalInvested = 0;
 
+        // 1. Tally up shares and calculate average cost basis
         dbData.transactions.forEach(tx => {
             const ticker = tx.assets.ticker_symbol;
-            const value = tx.quantity * tx.price_per_unit;
-            if (!aggregated[ticker]) aggregated[ticker] = { shares: 0, value: 0 };
+            if (!aggregated[ticker]) aggregated[ticker] = { shares: 0, total_cost: 0 };
 
             if (tx.transaction_type === 'BUY') {
                 aggregated[ticker].shares += tx.quantity;
-                aggregated[ticker].value += value;
-                totalInvested += value;
+                aggregated[ticker].total_cost += (tx.quantity * tx.price_per_unit);
             } else if (tx.transaction_type === 'SELL') {
+                // Approximate removing cost basis proportionally
+                const avgPrice = aggregated[ticker].total_cost / aggregated[ticker].shares;
                 aggregated[ticker].shares -= tx.quantity;
-                aggregated[ticker].value -= value;
-                totalInvested -= value;
+                aggregated[ticker].total_cost -= (tx.quantity * avgPrice);
             }
         });
 
-        const holdings = Object.keys(aggregated)
-            .filter(ticker => aggregated[ticker].shares > 0)
-            .map(ticker => ({
-                ticker: ticker,
-                shares: aggregated[ticker].shares,
-                value: aggregated[ticker].value,
-                change: 'Active'
-            }));
+        // Filter out sold assets
+        const activeTickers = Object.keys(aggregated).filter(t => aggregated[t].shares > 0);
 
-        res.json({ status: "success", totalValue: totalInvested, holdings: holdings });
+        // 2. Fetch live prices from Python
+        let livePrices = {};
+        if (activeTickers.length > 0) {
+            try {
+                const pyRes = await axios.post('http://127.0.0.1:5000/live_prices', { tickers: activeTickers });
+                livePrices = pyRes.data;
+            } catch (err) {
+                console.log("[Node.js] Warning: Could not reach Python for live prices.");
+            }
+        }
+
+        // 3. Calculate Live Profit & Loss
+        let totalInvested = 0;
+        let totalLiveValue = 0;
+
+        const holdings = activeTickers.map(ticker => {
+            const shares = aggregated[ticker].shares;
+            const invested = aggregated[ticker].total_cost;
+            const livePrice = livePrices[ticker] || (invested / shares); // Fallback to break-even if API fails
+            const liveValue = shares * livePrice;
+            
+            totalInvested += invested;
+            totalLiveValue += liveValue;
+
+            const percentReturn = ((liveValue - invested) / invested) * 100;
+
+            return {
+                ticker: ticker,
+                shares: shares,
+                invested_value: invested,
+                live_value: liveValue,
+                live_price: livePrice,
+                percent_return: percentReturn
+            };
+        });
+
+        const totalPercentReturn = totalInvested > 0 ? ((totalLiveValue - totalInvested) / totalInvested) * 100 : 0;
+
+        res.json({ 
+            status: "success", 
+            totalInvested: totalInvested,
+            totalLiveValue: totalLiveValue,
+            totalPercentReturn: totalPercentReturn,
+            holdings: holdings 
+        });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: "Failed to fetch summary" });
     }
 });

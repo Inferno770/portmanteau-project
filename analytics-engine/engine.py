@@ -153,5 +153,34 @@ def get_price():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+@app.route('/live_prices', methods=['POST'])
+def live_prices():
+    data = request.json
+    tickers = data.get('tickers', [])
+    
+    if not tickers:
+        return jsonify({}), 200
+        
+    try:
+        # Fetch all tickers at once for speed
+        print(f"[Python Engine] Fetching batch live prices for {tickers}...")
+        ticker_str = " ".join(tickers)
+        data = yf.download(ticker_str, period='1d')['Close']
+        
+        prices = {}
+        # Handle the way yfinance formats single vs multiple tickers
+        if len(tickers) == 1:
+            prices[tickers[0]] = round(float(data.iloc[-1]), 2)
+        else:
+            for ticker in tickers:
+                if ticker in data.columns and not pd.isna(data[ticker].iloc[-1]):
+                    prices[ticker] = round(float(data[ticker].iloc[-1]), 2)
+                    
+        return jsonify(prices), 200
+    except Exception as e:
+        print(f"Error fetching live prices: {e}")
+        return jsonify({}), 500
+
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
