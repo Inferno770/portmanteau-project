@@ -75,7 +75,7 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  authContainer: { flex: 1, backgroundColor: '#f5f7fa', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  authContainer: {flex: 1, backgroundColor: '#f5f7fa', justifyContent: 'center', alignItems: 'center', padding: 20, width: '100%', maxWidth: 600, alignSelf: 'center'},
   authCard: { backgroundColor: 'white', padding: 30, borderRadius: 16, width: '100%', maxWidth: 400, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 4 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#4a76a8', textAlign: 'center', marginBottom: 5 },
   subtitle: { fontSize: 16, color: '#666', textAlign: 'center', marginBottom: 20 },

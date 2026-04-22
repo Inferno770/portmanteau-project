@@ -7,297 +7,63 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const app = express();
-app.use(cors()); 
+app.use(cors());
 app.use(express.json());
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // --- AUTHENTICATION ROUTES ---
-
-// 1. User Registration
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { email, password } = req.body;
+        if (!email || !password) return res.status(400).json({ error: "Email and password required." });
 
-        if (!email || !password) {
-            return res.status(400).json({ error: "Email and password are required." });
-        }
-
-        // Hash the password securely (NFR3 Requirement)
-        const saltRounds = 10;
-        const password_hash = await bcrypt.hash(password, saltRounds);
-
-        // Insert into Supabase
-        const { data, error } = await supabase
-            .from('users')
-            .insert([{ email, password_hash }])
-            .select('user_id, email')
-            .single();
-
+        const password_hash = await bcrypt.hash(password, 10);
+        const { data, error } = await supabase.from('users').insert([{ email, password_hash }]).select('user_id, email').single();
         if (error) throw error;
 
-        // Automatically create an empty default portfolio for the new user
-        await supabase
-            .from('portfolios')
-            .insert([{ user_id: data.user_id, name: "Main Portfolio" }]);
-
-        res.status(201).json({ status: "success", message: "User registered successfully!", user: data });
-
+        await supabase.from('portfolios').insert([{ user_id: data.user_id, name: "Main Portfolio" }]);
+        res.status(201).json({ status: "success", user: data });
     } catch (error) {
-        console.error("[Register Error]", error.message);
         res.status(500).json({ error: "Registration failed", details: error.message });
     }
 });
 
-// 2. User Login
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
+        const { data: user, error } = await supabase.from('users').select('*').eq('email', email).single();
+        if (error || !user) return res.status(401).json({ error: "Invalid email or password." });
 
-        // Find the user by email
-        const { data: user, error } = await supabase
-            .from('users')
-            .select('user_id, email, password_hash')
-            .eq('email', email)
-            .single();
-
-        if (error || !user) {
-            return res.status(401).json({ error: "Invalid email or password." });
-        }
-
-        // Compare the submitted password with the hashed password in the DB
         const isMatch = await bcrypt.compare(password, user.password_hash);
-        if (!isMatch) {
-            return res.status(401).json({ error: "Invalid email or password." });
-        }
+        if (!isMatch) return res.status(401).json({ error: "Invalid email or password." });
 
-        // Generate the JWT token (FR1 Requirement)
-        const token = jwt.sign(
-            { user_id: user.user_id, email: user.email }, 
-            JWT_SECRET, 
-            { expiresIn: '24h' }
-        );
-
-        res.status(200).json({
-            status: "success",
-            message: "Login successful!",
-            token: token,
-            user_id: user.user_id
-        });
-
+        const token = jwt.sign({ user_id: user.user_id }, JWT_SECRET, { expiresIn: '24h' });
+        res.status(200).json({ status: "success", token: token, user_id: user.user_id });
     } catch (error) {
-        console.error("[Login Error]", error.message);
         res.status(500).json({ error: "Login failed", details: error.message });
     }
 });
 
-// --- BUSINESS LOGIC HELPER ---
-function generateRebalancingActions(currentPortfolio, optimizedAllocations) {
-    const totalValue = currentPortfolio.reduce((sum, asset) => sum + asset.value, 0);
-    const actions = [];
-
-    // Create a master list of all tickers (combining current holdings and Python's suggestions)
-    const allTickers = new Set([
-        ...currentPortfolio.map(a => a.ticker),
-        ...Object.keys(optimizedAllocations)
-    ]);
-
-    // Loop through every single ticker
-    allTickers.forEach(ticker => {
-        // Find how much they currently own (default to 0 if they don't own it)
-        const currentAsset = currentPortfolio.find(a => a.ticker === ticker);
-        const currentWeight = currentAsset ? (currentAsset.value / totalValue) * 100 : 0;
-        
-        // Find how much they SHOULD own
-        const targetWeight = optimizedAllocations[ticker] || 0;
-        const difference = targetWeight - currentWeight;
-
-        // If the difference is meaningful (> 1%), generate the instruction
-        if (Math.abs(difference) > 1.0) {
-            const actionType = difference > 0 ? "BUY" : "SELL";
-            actions.push({
-                ticker: ticker,
-                action: actionType,
-                amount_percent: Math.abs(difference).toFixed(2),
-                instruction: `${actionType} ${Math.abs(difference).toFixed(2)}% of ${ticker}`
-            });
-        }
-    });
-
-    return actions;
-}
-
-// --- API ROUTE ---
-app.post('/api/portfolio/optimize', async (req, res) => {
-    try {
-        const { user_id } = req.body;
-        console.log(`[Node.js] Fetching database records for user: ${user_id}`);
-
-        // 1. QUERY SUPABASE: Get all transactions for this user's portfolio
-        const { data: dbData, error: dbError } = await supabase
-            .from('portfolios')
-            .select(`
-                transactions (
-                    quantity,
-                    price_per_unit,
-                    assets ( ticker_symbol )
-                )
-            `)
-            .eq('user_id', user_id)
-            .single();
-
-        if (dbError || !dbData) throw new Error("Could not find portfolio in database.");
-
-        // 2. FORMAT & AGGREGATE DATA: Combine multiple trades of the same ticker
-        const aggregatedPortfolio = {};
-        
-        dbData.transactions.forEach(tx => {
-            const ticker = tx.assets.ticker_symbol;
-            const value = tx.quantity * tx.price_per_unit;
-            
-            if (aggregatedPortfolio[ticker]) {
-                aggregatedPortfolio[ticker] += value; // Add to existing holding
-            } else {
-                aggregatedPortfolio[ticker] = value;  // Create new holding
-            }
-        });
-
-        // Turn the aggregated object back into our array format
-        const current_portfolio = Object.keys(aggregatedPortfolio).map(ticker => ({
-            ticker: ticker,
-            value: aggregatedPortfolio[ticker]
-        }));
-
-        console.log("[Node.js] Aggregated Portfolio:", current_portfolio);
-
-        // 3. CALL PYTHON ENGINE
-        const tickers = current_portfolio.map(asset => asset.ticker);
-        
-        // Ensure we always request VOO to give the engine a safe asset to pivot to
-        if (!tickers.includes('VOO')) tickers.push('VOO');
-
-        const pythonResponse = await axios.post('http://127.0.0.1:5000/optimize', { tickers });
-        const optimizationData = pythonResponse.data;
-        const targetAllocations = optimizationData.metrics.optimized_portfolio.allocations;
-
-        // 4. GENERATE ADVICE
-        const rebalancingAdvice = generateRebalancingActions(current_portfolio, targetAllocations);
-
-        // 5. SEND TO FRONTEND
-        res.json({
-            status: "success",
-            original_math: optimizationData,
-            rebalancing_actions: rebalancingAdvice
-        });
-
-    } catch (error) {
-        const errorMessage = error.response ? error.response.data.message : error.message;
-        console.error("[Node.js] Error:", errorMessage);
-        res.status(500).json({ error: "Analysis Failed", details: errorMessage });
-    }
-});
-
-const PORT = 3000;
-
-// ==========================================
-// --- NEW: MANUAL TRANSACTION ENTRY (FR2) ---
-// ==========================================
-app.post('/api/portfolio/transaction', async (req, res) => {
-    try {
-        const { user_id, ticker, type, quantity, price } = req.body; 
-
-        if (!user_id || !ticker || !type || !quantity || !price) {
-            return res.status(400).json({ error: "All fields are required." });
-        }
-
-        // 1. Find the user's Main Portfolio ID
-        const { data: portfolio, error: portError } = await supabase
-            .from('portfolios')
-            .select('portfolio_id')
-            .eq('user_id', user_id)
-            .single();
-
-        if (portError || !portfolio) return res.status(404).json({ error: "Portfolio not found." });
-
-        // 2. Check if the Asset exists in the database. If not, add it!
-        let { data: asset } = await supabase
-            .from('assets')
-            .select('asset_id')
-            .eq('ticker_symbol', ticker.toUpperCase())
-            .single();
-
-        if (!asset) {
-            const { data: newAsset, error: newAssetError } = await supabase
-                .from('assets')
-                .insert([{ 
-                    ticker_symbol: ticker.toUpperCase(), 
-                    asset_name: ticker.toUpperCase(), 
-                    asset_type: 'STOCK' 
-                }])
-                .select('asset_id')
-                .single();
-                
-            if (newAssetError) throw newAssetError;
-            asset = newAsset;
-        }
-
-        // 3. Save the Transaction
-        const { error: txError } = await supabase
-            .from('transactions')
-            .insert([{
-                portfolio_id: portfolio.portfolio_id,
-                asset_id: asset.asset_id,
-                transaction_type: type.toUpperCase(), // 'BUY' or 'SELL'
-                quantity: parseFloat(quantity),
-                price_per_unit: parseFloat(price)
-            }]);
-
-        if (txError) throw txError;
-
-        res.status(201).json({ status: "success", message: `Successfully added ${type} order for ${ticker}` });
-
-    } catch (error) {
-        console.error("[Transaction Error]", error.message);
-        res.status(500).json({ error: "Failed to add transaction", details: error.message });
-    }
-});
-
-// ==========================================
-// --- NEW: DASHBOARD SUMMARY ROUTE ---
-// ==========================================
+// --- DASHBOARD SUMMARY ROUTE ---
 app.post('/api/portfolio/summary', async (req, res) => {
     try {
         const { user_id } = req.body;
-        if (!user_id) return res.status(400).json({ error: "User ID required" });
-
-        // 1. Fetch all transactions for this user
         const { data: dbData, error: dbError } = await supabase
             .from('portfolios')
-            .select(`
-                transactions (
-                    transaction_type,
-                    quantity,
-                    price_per_unit,
-                    assets ( ticker_symbol )
-                )
-            `)
-            .eq('user_id', user_id)
-            .single();
+            .select(`transactions (transaction_type, quantity, price_per_unit, assets(ticker_symbol))`)
+            .eq('user_id', user_id).single();
 
         if (dbError || !dbData) return res.status(404).json({ error: "Portfolio not found." });
 
-        // 2. Aggregate the holdings (Add BUYs, subtract SELLs)
         const aggregated = {};
         let totalInvested = 0;
 
         dbData.transactions.forEach(tx => {
             const ticker = tx.assets.ticker_symbol;
             const value = tx.quantity * tx.price_per_unit;
-
-            if (!aggregated[ticker]) {
-                aggregated[ticker] = { shares: 0, value: 0 };
-            }
+            if (!aggregated[ticker]) aggregated[ticker] = { shares: 0, value: 0 };
 
             if (tx.transaction_type === 'BUY') {
                 aggregated[ticker].shares += tx.quantity;
@@ -310,28 +76,113 @@ app.post('/api/portfolio/summary', async (req, res) => {
             }
         });
 
-        // 3. Format into a clean array for React Native
         const holdings = Object.keys(aggregated)
-            .filter(ticker => aggregated[ticker].shares > 0) // Only show assets you still own
+            .filter(ticker => aggregated[ticker].shares > 0)
             .map(ticker => ({
                 ticker: ticker,
                 shares: aggregated[ticker].shares,
                 value: aggregated[ticker].value,
-                change: 'Active' // A placeholder tag since we aren't fetching live daily price changes here
+                change: 'Active'
             }));
 
-        res.json({
-            status: "success",
-            totalValue: totalInvested,
-            holdings: holdings
-        });
-
+        res.json({ status: "success", totalValue: totalInvested, holdings: holdings });
     } catch (error) {
-        console.error("[Summary Error]", error.message);
         res.status(500).json({ error: "Failed to fetch summary" });
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`[Node.js] API Gateway running on http://localhost:${PORT}`);
+// --- MANUAL TRANSACTION ROUTE ---
+app.post('/api/portfolio/transaction', async (req, res) => {
+    try {
+        // Notice: We no longer ask the frontend for the 'price'!
+        const { user_id, ticker, type, quantity } = req.body; 
+        
+        if (!user_id || !ticker || !type || !quantity) {
+             return res.status(400).json({ error: "Ticker and Quantity are required." });
+        }
+
+        // 1. Ask Python for the live market price
+        console.log(`[Node.js] Fetching live market price for ${ticker}...`);
+        const pythonResponse = await axios.post('http://127.0.0.1:5000/price', { ticker });
+        const livePrice = pythonResponse.data.price;
+
+        if (!livePrice) throw new Error("Could not fetch live price.");
+
+        // 2. Find Portfolio
+        const { data: portfolio } = await supabase.from('portfolios').select('portfolio_id').eq('user_id', user_id).single();
+        
+        // 3. Find or Create Asset
+        let { data: asset } = await supabase.from('assets').select('asset_id').eq('ticker_symbol', ticker).single();
+        if (!asset) {
+            const { data: newAsset } = await supabase.from('assets').insert([{ ticker_symbol: ticker, asset_name: ticker, asset_type: 'STOCK' }]).select('asset_id').single();
+            asset = newAsset;
+        }
+
+        // 4. Save Transaction using the LIVE PRICE
+        await supabase.from('transactions').insert([{
+            portfolio_id: portfolio.portfolio_id, 
+            asset_id: asset.asset_id, 
+            transaction_type: type, 
+            quantity: parseFloat(quantity), 
+            price_per_unit: livePrice // <-- Inserted automatically!
+        }]);
+
+        // Send the live price back to the frontend so the user knows what they paid
+        res.status(201).json({ status: "success", executed_price: livePrice });
+    } catch (error) {
+        console.error("[Transaction Error]", error.message);
+        const errorMsg = error.response && error.response.data ? error.response.data.error : "Failed to add transaction";
+        res.status(500).json({ error: errorMsg });
+    }
 });
+
+// --- OPTIMIZATION ROUTE ---
+app.post('/api/portfolio/optimize', async (req, res) => {
+    try {
+        const { user_id } = req.body;
+        const { data: dbData } = await supabase.from('portfolios').select(`transactions (transaction_type, quantity, price_per_unit, assets(ticker_symbol))`).eq('user_id', user_id).single();
+
+        const aggregatedPortfolio = {};
+        dbData.transactions.forEach(tx => {
+            const ticker = tx.assets.ticker_symbol;
+            const value = tx.quantity * tx.price_per_unit;
+            if (!aggregatedPortfolio[ticker]) aggregatedPortfolio[ticker] = 0;
+            if (tx.transaction_type === 'BUY') aggregatedPortfolio[ticker] += value;
+            else if (tx.transaction_type === 'SELL') aggregatedPortfolio[ticker] -= value;
+        });
+
+        const current_portfolio = Object.keys(aggregatedPortfolio)
+            .filter(ticker => aggregatedPortfolio[ticker] > 0)
+            .map(ticker => ({ ticker: ticker, value: aggregatedPortfolio[ticker] }));
+
+        const tickers = current_portfolio.map(asset => asset.ticker);
+        if (!tickers.includes('VOO')) tickers.push('VOO');
+
+        const pythonResponse = await axios.post('http://127.0.0.1:5000/optimize', { tickers });
+        const targetAllocations = pythonResponse.data.metrics.optimized_portfolio.allocations;
+
+        // Rebalancing logic
+        const totalValue = current_portfolio.reduce((sum, asset) => sum + asset.value, 0);
+        const actions = [];
+        const allTickers = new Set([...current_portfolio.map(a => a.ticker), ...Object.keys(targetAllocations)]);
+
+        allTickers.forEach(ticker => {
+            const currentAsset = current_portfolio.find(a => a.ticker === ticker);
+            const currentWeight = currentAsset ? (currentAsset.value / totalValue) * 100 : 0;
+            const targetWeight = targetAllocations[ticker] || 0;
+            const difference = targetWeight - currentWeight;
+
+            if (Math.abs(difference) > 1.0) {
+                const actionType = difference > 0 ? "BUY" : "SELL";
+                actions.push({ ticker, action: actionType, instruction: `${actionType} ${Math.abs(difference).toFixed(2)}% of ${ticker}` });
+            }
+        });
+
+        res.json({ status: "success", original_math: pythonResponse.data, rebalancing_actions: actions });
+    } catch (error) {
+        res.status(500).json({ error: "Analysis Failed" });
+    }
+});
+
+const PORT = 3000;
+app.listen(PORT, () => console.log(`[Node.js] API Gateway running on http://localhost:${PORT}`));

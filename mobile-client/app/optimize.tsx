@@ -93,7 +93,13 @@ export default function OptimizeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f7fa' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#f5f7fa',
+    width: '100%', 
+    maxWidth: 600, 
+    alignSelf: 'center' 
+  },
   blueHeader: { backgroundColor: '#4a76a8', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, paddingTop: 50, paddingBottom: 20 },
   backBtn: { color: 'white', fontWeight: 'bold', fontSize: 16 },
   headerTitle: { color: 'white', fontSize: 18, fontWeight: 'bold' },

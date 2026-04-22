@@ -1,7 +1,7 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useContext, useCallback } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, ActivityIndicator } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { AuthContext } from './_layout';
 
 export default function Dashboard() {
@@ -15,10 +15,11 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   // Fetch data as soon as the screen loads
-  useEffect(() => {
-    fetchDashboardSummary();
-  }, []);
-
+  useFocusEffect(
+    useCallback(() => {
+      fetchDashboardSummary();
+    }, [userId])
+  );
   const fetchDashboardSummary = async () => {
     try {
       const response = await fetch('http://localhost:3000/api/portfolio/summary', {
