@@ -152,6 +152,9 @@ def optimize_portfolio(tickers):
 def optimize():
     data = request.json
     tickers = data.get('tickers', [])
+
+    tickers = list(set(tickers))
+
     if not tickers:
         return jsonify({"error": "No tickers provided"}), 400
     

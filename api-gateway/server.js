@@ -149,13 +149,27 @@ app.post('/api/portfolio/optimize', async (req, res) => {
 
         if (dbError || !dbData) throw new Error("Could not find portfolio in database.");
 
-        // 2. FORMAT DATA: Turn the raw database rows into our current_portfolio array
-        const current_portfolio = dbData.transactions.map(tx => ({
-            ticker: tx.assets.ticker_symbol,
-            value: tx.quantity * tx.price_per_unit
+        // 2. FORMAT & AGGREGATE DATA: Combine multiple trades of the same ticker
+        const aggregatedPortfolio = {};
+        
+        dbData.transactions.forEach(tx => {
+            const ticker = tx.assets.ticker_symbol;
+            const value = tx.quantity * tx.price_per_unit;
+            
+            if (aggregatedPortfolio[ticker]) {
+                aggregatedPortfolio[ticker] += value; // Add to existing holding
+            } else {
+                aggregatedPortfolio[ticker] = value;  // Create new holding
+            }
+        });
+
+        // Turn the aggregated object back into our array format
+        const current_portfolio = Object.keys(aggregatedPortfolio).map(ticker => ({
+            ticker: ticker,
+            value: aggregatedPortfolio[ticker]
         }));
 
-        console.log("[Node.js] Portfolio found:", current_portfolio);
+        console.log("[Node.js] Aggregated Portfolio:", current_portfolio);
 
         // 3. CALL PYTHON ENGINE
         const tickers = current_portfolio.map(asset => asset.ticker);
