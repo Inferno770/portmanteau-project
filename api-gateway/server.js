@@ -263,6 +263,75 @@ app.post('/api/portfolio/transaction', async (req, res) => {
     }
 });
 
+// ==========================================
+// --- NEW: DASHBOARD SUMMARY ROUTE ---
+// ==========================================
+app.post('/api/portfolio/summary', async (req, res) => {
+    try {
+        const { user_id } = req.body;
+        if (!user_id) return res.status(400).json({ error: "User ID required" });
+
+        // 1. Fetch all transactions for this user
+        const { data: dbData, error: dbError } = await supabase
+            .from('portfolios')
+            .select(`
+                transactions (
+                    transaction_type,
+                    quantity,
+                    price_per_unit,
+                    assets ( ticker_symbol )
+                )
+            `)
+            .eq('user_id', user_id)
+            .single();
+
+        if (dbError || !dbData) return res.status(404).json({ error: "Portfolio not found." });
+
+        // 2. Aggregate the holdings (Add BUYs, subtract SELLs)
+        const aggregated = {};
+        let totalInvested = 0;
+
+        dbData.transactions.forEach(tx => {
+            const ticker = tx.assets.ticker_symbol;
+            const value = tx.quantity * tx.price_per_unit;
+
+            if (!aggregated[ticker]) {
+                aggregated[ticker] = { shares: 0, value: 0 };
+            }
+
+            if (tx.transaction_type === 'BUY') {
+                aggregated[ticker].shares += tx.quantity;
+                aggregated[ticker].value += value;
+                totalInvested += value;
+            } else if (tx.transaction_type === 'SELL') {
+                aggregated[ticker].shares -= tx.quantity;
+                aggregated[ticker].value -= value;
+                totalInvested -= value;
+            }
+        });
+
+        // 3. Format into a clean array for React Native
+        const holdings = Object.keys(aggregated)
+            .filter(ticker => aggregated[ticker].shares > 0) // Only show assets you still own
+            .map(ticker => ({
+                ticker: ticker,
+                shares: aggregated[ticker].shares,
+                value: aggregated[ticker].value,
+                change: 'Active' // A placeholder tag since we aren't fetching live daily price changes here
+            }));
+
+        res.json({
+            status: "success",
+            totalValue: totalInvested,
+            holdings: holdings
+        });
+
+    } catch (error) {
+        console.error("[Summary Error]", error.message);
+        res.status(500).json({ error: "Failed to fetch summary" });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`[Node.js] API Gateway running on http://localhost:${PORT}`);
 });

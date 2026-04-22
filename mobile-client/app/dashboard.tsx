@@ -1,17 +1,43 @@
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
+import { useState, useEffect, useContext } from 'react';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, ActivityIndicator } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { useRouter } from 'expo-router';
+import { AuthContext } from './_layout';
 
 export default function Dashboard() {
   const router = useRouter();
+  const { userId } = useContext(AuthContext);
   const screenWidth = Dimensions.get("window").width;
 
-  // Mock data matching your design document
-  const portfolio = [
-    { ticker: 'AAPL', value: 124500, change: '+1.2%' },
-    { ticker: 'BTC', value: 1500, change: '-0.59%' },
-    { ticker: 'VUSA', value: 1500, change: '+1.2%' },
-  ];
+  // State to hold our real database data
+  const [holdings, setHoldings] = useState<any[]>([]);
+  const [totalValue, setTotalValue] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch data as soon as the screen loads
+  useEffect(() => {
+    fetchDashboardSummary();
+  }, []);
+
+  const fetchDashboardSummary = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/portfolio/summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId }),
+      });
+      const data = await response.json();
+      
+      if (data.status === 'success') {
+        setHoldings(data.holdings);
+        setTotalValue(data.totalValue);
+      }
+    } catch (err) {
+      console.error("Failed to load summary.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -19,10 +45,14 @@ export default function Dashboard() {
       <View style={styles.blueHeader}>
         <Text style={styles.headerTitle}>Portmanteau</Text>
         <View style={styles.valueCard}>
-          <Text style={styles.label}>Total Portfolio Value</Text>
+          <Text style={styles.label}>Total Invested Value</Text>
           <View style={styles.valueRow}>
-            <Text style={styles.amount}>$127,500.00</Text>
-            <View style={styles.tag}><Text style={styles.tagText}>+1.2%</Text></View>
+            {loading ? (
+                <ActivityIndicator size="small" color="#4a76a8" />
+            ) : (
+                <Text style={styles.amount}>${totalValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</Text>
+            )}
+            <View style={styles.tag}><Text style={styles.tagText}>LIVE</Text></View>
           </View>
         </View>
       </View>
@@ -47,21 +77,27 @@ export default function Dashboard() {
             />
         </View>
 
-        {/* Holdings List */}
+        {/* Dynamic Holdings List */}
         <View style={{ paddingHorizontal: 20 }}>
-            {portfolio.map((item, i) => (
-            <View key={i} style={styles.holdingCard}>
-                <View style={styles.iconPlaceholder}><Text style={styles.iconText}>{item.ticker[0]}</Text></View>
-                <View style={{flex: 1, marginLeft: 15}}>
-                <Text style={styles.tickerText}>{item.ticker}</Text>
-                <Text style={styles.subText}>1 Holdings / {item.ticker}</Text>
+            {loading ? (
+                <ActivityIndicator size="large" color="#4a76a8" style={{marginTop: 20}}/>
+            ) : holdings.length === 0 ? (
+                <Text style={{textAlign: 'center', color: '#888', marginTop: 20}}>No assets found. Add a transaction!</Text>
+            ) : (
+                holdings.map((item, i) => (
+                <View key={i} style={styles.holdingCard}>
+                    <View style={styles.iconPlaceholder}><Text style={styles.iconText}>{item.ticker[0]}</Text></View>
+                    <View style={{flex: 1, marginLeft: 15}}>
+                        <Text style={styles.tickerText}>{item.ticker}</Text>
+                        <Text style={styles.subText}>{item.shares} Shares</Text>
+                    </View>
+                    <View style={{alignItems: 'flex-end'}}>
+                        <Text style={styles.tickerText}>${item.value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</Text>
+                        <Text style={{color: '#4a76a8', fontWeight: 'bold', fontSize: 12}}>{item.change}</Text>
+                    </View>
                 </View>
-                <View style={{alignItems: 'flex-end'}}>
-                <Text style={styles.tickerText}>${item.value.toLocaleString()}</Text>
-                <Text style={{color: item.change.includes('+') ? '#2ecc71' : '#e74c3c', fontWeight: 'bold'}}>{item.change}</Text>
-                </View>
-            </View>
-            ))}
+                ))
+            )}
         </View>
 
         {/* Navigation Buttons */}
@@ -78,7 +114,7 @@ export default function Dashboard() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f7fa' },
+  container: { flex: 1, backgroundColor: '#f5f7fa', width: '100%', maxWidth: 600, alignSelf: 'center' },
   blueHeader: { backgroundColor: '#4a76a8', height: 180, padding: 20, borderBottomLeftRadius: 30, borderBottomRightRadius: 30, zIndex: 10 },
   headerTitle: { color: '#fff', fontSize: 20, fontWeight: 'bold', textAlign: 'center', marginTop: 30 },
   valueCard: { backgroundColor: '#fff', borderRadius: 15, padding: 20, marginTop: 30, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 },
