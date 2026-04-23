@@ -99,7 +99,7 @@ app.post('/api/portfolio/summary', async (req, res) => {
         let livePrices = {};
         if (activeTickers.length > 0) {
             try {
-                const pyRes = await axios.post('http://127.0.0.1:5000/live_prices', { tickers: activeTickers });
+                const pyRes = await axios.post('https://HadiAhmad.pythonanywhere.com/live_prices', { tickers: activeTickers });
                 livePrices = pyRes.data;
             } catch (err) {
                 console.log("[Node.js] Warning: Could not reach Python for live prices.");
@@ -158,7 +158,7 @@ app.post('/api/portfolio/transaction', async (req, res) => {
 
         // 1. Ask Python for the live market price
         console.log(`[Node.js] Fetching live market price for ${ticker}...`);
-        const pythonResponse = await axios.post('http://127.0.0.1:5000/price', { ticker });
+        const pythonResponse = await axios.post('https://HadiAhmad.pythonanywhere.com/price', { ticker });
         const livePrice = pythonResponse.data.price;
 
         if (!livePrice) throw new Error("Could not fetch live price.");
@@ -213,7 +213,7 @@ app.post('/api/portfolio/optimize', async (req, res) => {
         const tickers = current_portfolio.map(asset => asset.ticker);
         if (!tickers.includes('VOO')) tickers.push('VOO');
 
-        const pythonResponse = await axios.post('http://127.0.0.1:5000/optimize', { tickers });
+        const pythonResponse = await axios.post('https://HadiAhmad.pythonanywhere.com/optimize', { tickers });
         const targetAllocations = pythonResponse.data.metrics.optimized_portfolio.allocations;
 
         // Rebalancing logic
