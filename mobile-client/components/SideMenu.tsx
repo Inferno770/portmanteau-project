@@ -2,11 +2,11 @@ import { Modal, View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'r
 import { useRouter } from 'expo-router';
 import { useContext } from 'react';
 import { AuthContext } from '../app/_layout';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function SideMenu({ visible, onClose }: { visible: boolean, onClose: () => void }) {
   const router = useRouter();
   
-  // Bring in the theme!
   const { setToken, setUserId, userEmail, setUserEmail, customName, theme } = useContext(AuthContext);
 
   const handleLogout = () => {
@@ -32,7 +32,6 @@ export default function SideMenu({ visible, onClose }: { visible: boolean, onClo
     <Modal visible={visible} animationType="fade" transparent={true} onRequestClose={onClose}>
       <View style={styles.overlay}>
         
-        {/* Apply Dark Background to Drawer */}
         <View style={[styles.drawer, isDark && styles.darkDrawer]}>
           <SafeAreaView style={{ flex: 1, justifyContent: 'space-between' }}>
             
@@ -41,24 +40,23 @@ export default function SideMenu({ visible, onClose }: { visible: boolean, onClo
                 <Text style={styles.headerTitle}>Portmanteau</Text>
               </View>
 
-              {/* Apply Dark Text to Links */}
               <TouchableOpacity style={[styles.navItem, isDark && styles.darkNavItem]} onPress={() => navigate('/dashboard')}>
-                <Text style={styles.navIcon}>📊</Text>
+                <Ionicons name="pie-chart-outline" size={22} color={isDark ? '#f5f5f5' : '#333'} style={styles.navIcon} />
                 <Text style={[styles.navText, isDark && styles.darkText]}>Dashboard</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={[styles.navItem, isDark && styles.darkNavItem]} onPress={() => navigate('/optimize')}>
-                <Text style={styles.navIcon}>📈</Text>
-                <Text style={[styles.navText, isDark && styles.darkText]}>Optimization View</Text>
-              </TouchableOpacity>
-
               <TouchableOpacity style={[styles.navItem, isDark && styles.darkNavItem]} onPress={() => navigate('/add-transaction')}>
-                <Text style={styles.navIcon}>➕</Text>
+                <Ionicons name="add-circle-outline" size={24} color={isDark ? '#f5f5f5' : '#333'} style={styles.navIcon} />
                 <Text style={[styles.navText, isDark && styles.darkText]}>Add Transaction</Text>
               </TouchableOpacity>
 
+              <TouchableOpacity style={[styles.navItem, isDark && styles.darkNavItem]} onPress={() => navigate('/optimize')}>
+                <Ionicons name="trending-up-outline" size={22} color={isDark ? '#f5f5f5' : '#333'} style={styles.navIcon} />
+                <Text style={[styles.navText, isDark && styles.darkText]}>Optimization View</Text>
+              </TouchableOpacity>
+
               <TouchableOpacity style={[styles.navItem, isDark && styles.darkNavItem]} onPress={() => navigate('/settings')}>
-                <Text style={styles.navIcon}>⚙️</Text>
+                <Ionicons name="settings-outline" size={22} color={isDark ? '#f5f5f5' : '#333'} style={styles.navIcon} />
                 <Text style={[styles.navText, isDark && styles.darkText]}>Settings</Text>
               </TouchableOpacity>
             </View>
@@ -96,7 +94,7 @@ const styles = StyleSheet.create({
   headerTitle: { color: 'white', fontSize: 22, fontWeight: 'bold' },
   navItem: { flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
   darkNavItem: { borderBottomColor: '#333' },
-  navIcon: { fontSize: 20, marginRight: 15 },
+  navIcon: { marginRight: 15 },
   navText: { fontSize: 16, fontWeight: '600', color: '#333' },
   darkText: { color: '#f5f5f5' },
   profileBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 15, borderTopWidth: 1, borderTopColor: '#e0e0e0', backgroundColor: '#f8f9fa' },
