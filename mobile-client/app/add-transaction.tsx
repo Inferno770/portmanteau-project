@@ -134,7 +134,7 @@ export default function AddTransaction() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f7fa', width: '100%', maxWidth: 600, alignSelf: 'center' },
+  container: { flex: 1, backgroundColor: '#f5f7fa' },
   blueHeader: { backgroundColor: '#4a76a8', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, paddingTop: 50, paddingBottom: 20 },
   headerTitle: { color: 'white', fontSize: 18, fontWeight: 'bold' },
   formContainer: { padding: 20, backgroundColor: 'white', flex: 1 },

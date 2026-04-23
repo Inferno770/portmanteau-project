@@ -22,13 +22,10 @@ export default function SideMenu({ visible, onClose }: { visible: boolean, onClo
   return (
     <Modal visible={visible} animationType="fade" transparent={true} onRequestClose={onClose}>
       <View style={styles.overlay}>
-        {/* Invisible area on the right to click and close the menu */}
-        <TouchableOpacity style={styles.closeArea} onPress={onClose} activeOpacity={1} />
         
-        {/* The actual white side panel */}
+        {/* 1. The actual white side panel (Moved to the top so it renders on the LEFT) */}
         <View style={styles.drawer}>
           <SafeAreaView style={{ flex: 1, justifyContent: 'space-between' }}>
-            
             <View>
               <View style={styles.header}>
                 <Text style={styles.headerTitle}>Portmanteau</Text>
@@ -50,7 +47,6 @@ export default function SideMenu({ visible, onClose }: { visible: boolean, onClo
               </TouchableOpacity>
             </View>
 
-            {/* User Profile Bar at the bottom */}
             <View style={styles.profileBar}>
               <View style={styles.profileInfo}>
                 <View style={styles.avatar}><Text style={styles.avatarText}>P</Text></View>
@@ -66,6 +62,8 @@ export default function SideMenu({ visible, onClose }: { visible: boolean, onClo
 
           </SafeAreaView>
         </View>
+        <TouchableOpacity style={styles.closeArea} onPress={onClose} activeOpacity={1} />
+        
       </View>
     </Modal>
   );

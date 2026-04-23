@@ -128,14 +128,6 @@ export default function Dashboard() {
                 })
             )}
         </View>
-
-        <TouchableOpacity style={styles.navButton} onPress={() => router.push('/add-transaction')}>
-          <Text style={styles.navButtonText}>Add Transaction</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[styles.navButton, {backgroundColor: '#2ecc71', marginTop: 0, marginBottom: 40}]} onPress={() => router.push('/optimize')}>
-          <Text style={styles.navButtonText}>Optimize Portfolio</Text>
-        </TouchableOpacity>
       </ScrollView>
       <SideMenu visible={menuVisible} onClose={() => setMenuVisible(false)} />
     </SafeAreaView>
@@ -143,7 +135,7 @@ export default function Dashboard() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f7fa', width: '100%', maxWidth: 600, alignSelf: 'center' },
+  container: { flex: 1, backgroundColor: '#f5f7fa' },
   blueHeader: { backgroundColor: '#4a76a8', height: 180, padding: 20, borderBottomLeftRadius: 30, borderBottomRightRadius: 30, zIndex: 10 },
   headerTitle: { color: '#fff', fontSize: 20, fontWeight: 'bold', textAlign: 'center', marginTop: 30 },
   valueCard: { backgroundColor: '#fff', borderRadius: 15, padding: 20, marginTop: 30, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 },

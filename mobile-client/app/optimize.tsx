@@ -99,10 +99,10 @@ export default function OptimizeScreen() {
                 
                 <LineChart
                   data={{
-                    labels: chartLabels, // NEW: Injected Risk Labels
-                    datasets: [{ data: chartData }] // NEW: Filtered Curve Data
+                    labels: chartLabels, 
+                    datasets: [{ data: chartData }] 
                   }}
-                  width={screenWidth > 600 ? 460 : screenWidth - 80} 
+                  width={screenWidth - 80}
                   height={220} 
                   yAxisSuffix="%"
                   withInnerLines={true} 
@@ -170,7 +170,7 @@ export default function OptimizeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f7fa', width: '100%', maxWidth: 600, alignSelf: 'center' },
+  container: { flex: 1, backgroundColor: '#f5f7fa' },
   blueHeader: { backgroundColor: '#4a76a8', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, paddingTop: 50, paddingBottom: 20 },
   backBtn: { color: 'white', fontWeight: 'bold', fontSize: 16 },
   headerTitle: { color: 'white', fontSize: 18, fontWeight: 'bold' },
