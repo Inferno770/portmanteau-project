@@ -23,7 +23,7 @@ export default function AddTransaction() {
 
   const fetchCurrentHoldings = async () => {
     try {
-      const response = await fetch('http://192.168.1.217:3000/api/portfolio/summary', {
+      const response = await fetch('https://portmanteau-project.onrender.com/api/portfolio/summary', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId }),
       });
       const data = await response.json();
@@ -56,7 +56,7 @@ export default function AddTransaction() {
     setTxLoading(true); setTxMessage(null);
 
     try {
-      const response = await fetch('http://192.168.1.217:3000/api/portfolio/transaction', {
+      const response = await fetch('https://portmanteau-project.onrender.com/api/portfolio/transaction', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId, ticker: tickerUpper, type: txType, quantity: quantity }),

@@ -22,7 +22,7 @@ export default function OptimizeScreen() {
 
   const fetchOptimization = async () => {
     try {
-      const response = await fetch('http://192.168.1.217:3000/api/portfolio/optimize', {
+      const response = await fetch('https://portmanteau-project.onrender.com/api/portfolio/optimize', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId }), 
       });
       const data = await response.json();

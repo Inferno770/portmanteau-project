@@ -30,7 +30,7 @@ export default function SettingsScreen() {
       return;
     }
     try {
-      const res = await fetch(`http://192.168.1.217:3000/api/auth/password`, { 
+      const res = await fetch(`https://portmanteau-project.onrender.com/api/auth/password`, { 
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId, new_password: newPassword })
       });
@@ -50,7 +50,7 @@ export default function SettingsScreen() {
   const handleExportCSV = async () => {
     try {
       // 1. Fetch current portfolio
-      const res = await fetch(`http://192.168.1.217:3000/api/portfolio/summary`, { 
+      const res = await fetch(`https://portmanteau-project.onrender.com/api/portfolio/summary`, { 
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId })
       });
       const data = await res.json();
@@ -81,7 +81,7 @@ export default function SettingsScreen() {
     const executeWipe = async () => {
       try {
         console.log("Sending Wipe Request to Database...");
-        const response = await fetch(`http://192.168.1.217:3000/api/portfolio/reset`, {
+        const response = await fetch(`https://portmanteau-project.onrender.com/api/portfolio/reset`, {
           method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId })
         });
         
