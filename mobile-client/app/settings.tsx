@@ -1,7 +1,7 @@
 import { useState, useContext } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Alert } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { AuthContext } from './_layout';
 import SideMenu from '../components/SideMenu';
@@ -30,7 +30,7 @@ export default function SettingsScreen() {
       return;
     }
     try {
-      const res = await fetch(`http://localhost:3000/api/auth/password`, { 
+      const res = await fetch(`http://192.168.1.217:3000/api/auth/password`, { 
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId, new_password: newPassword })
       });
@@ -50,7 +50,7 @@ export default function SettingsScreen() {
   const handleExportCSV = async () => {
     try {
       // 1. Fetch current portfolio
-      const res = await fetch(`http://localhost:3000/api/portfolio/summary`, { // UPDATE WITH YOUR IP IF TESTING ON PHONE
+      const res = await fetch(`http://192.168.1.217:3000/api/portfolio/summary`, { 
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId })
       });
       const data = await res.json();
@@ -61,39 +61,64 @@ export default function SettingsScreen() {
         csvString += `${h.ticker},${h.shares},${h.invested_value},${h.live_value},${h.percent_return.toFixed(2)}\n`;
       });
 
-      // 3. SAFETY CHECK: Use "as any" to force TypeScript to ignore the web-type error
+      // 3. Brute force the FileSystem write
       const dir = (FileSystem as any).documentDirectory;
-      
-      if (!dir) {
-        setStatusMsg('CSV Export is only available on the mobile app.');
-        return;
-      }
-
-      // 4. Save to phone file system and share
       const fileUri = dir + "Portmanteau_Export.csv";
       
-      // We removed the Encoding parameter entirely because UTF-8 is already the default!
-      await FileSystem.writeAsStringAsync(fileUri, csvString);
-      await Sharing.shareAsync(fileUri);
+      await (FileSystem as any).writeAsStringAsync(fileUri, csvString);
+      await (Sharing as any).shareAsync(fileUri);
       
-    } catch (e) {
-      Alert.alert("Export Error", "Failed to generate CSV.");
+    } catch (e: any) {
+      console.error("CSV Crash Log:", e);
+      Alert.alert("Export Error", String(e.message || e));
     }
   };
 
   // --- WIPE PORTFOLIO ---
   const handleWipeData = () => {
-    Alert.alert("DANGER ZONE", "Are you sure you want to permanently delete all transactions? This cannot be undone.", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Wipe It", style: "destructive", onPress: async () => {
-          try {
-            await fetch(`http://localhost:3000/api/portfolio/reset`, { 
-              method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId })
-            });
-            Alert.alert("Success", "Portfolio wiped clean.");
-          } catch (e) {}
-      }}
-    ]);
+    
+    // 1. The actual database deletion logic
+    const executeWipe = async () => {
+      try {
+        console.log("Sending Wipe Request to Database...");
+        const response = await fetch(`http://192.168.1.217:3000/api/portfolio/reset`, {
+          method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId })
+        });
+        
+        const data = await response.json();
+        console.log("Supabase Response:", data);
+
+        if (data.status === 'success') {
+          Platform.OS === 'web' 
+            ? window.alert("Success: Portfolio wiped clean. Go check your dashboard!")
+            : Alert.alert("Success", "Portfolio wiped clean. Go check your dashboard!");
+        } else {
+          Platform.OS === 'web'
+            ? window.alert("Backend Error: " + (data.error || "Unknown error"))
+            : Alert.alert("Backend Error", data.error || "Unknown error occurred");
+        }
+      } catch (e: any) {
+        console.error("Network Error:", e);
+        Platform.OS === 'web'
+            ? window.alert("Network Crash: Could not reach Node.js. Is your IP correct?")
+            : Alert.alert("Network Crash", "Could not reach Node.js. Is your IP correct?");
+      }
+    };
+
+    // 2. The Platform Check for the Popup!
+    if (Platform.OS === 'web') {
+      // Use the browser's native confirm box
+      const confirmWipe = window.confirm("DANGER ZONE\n\nAre you sure you want to permanently delete all transactions? This cannot be undone.");
+      if (confirmWipe) {
+        executeWipe();
+      }
+    } else {
+      // Use the Mobile App's native alert box
+      Alert.alert("DANGER ZONE", "Are you sure you want to permanently delete all transactions? This cannot be undone.", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Wipe It", style: "destructive", onPress: executeWipe }
+      ]);
+    }
   };
 
   const isDark = theme === 'dark';

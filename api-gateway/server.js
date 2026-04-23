@@ -179,7 +179,7 @@ app.post('/api/portfolio/transaction', async (req, res) => {
             asset_id: asset.asset_id, 
             transaction_type: type, 
             quantity: parseFloat(quantity), 
-            price_per_unit: livePrice // <-- Inserted automatically!
+            price_per_unit: livePrice 
         }]);
 
         // Send the live price back to the frontend so the user knows what they paid
@@ -236,6 +236,37 @@ app.post('/api/portfolio/optimize', async (req, res) => {
         res.json({ status: "success", original_math: pythonResponse.data, rebalancing_actions: actions });
     } catch (error) {
         res.status(500).json({ error: "Analysis Failed" });
+    } 
+});
+
+// --- WIPE ENTIRE PORTFOLIO ---
+app.delete('/api/portfolio/reset', async (req, res) => {
+    try {
+        const { user_id } = req.body;
+        
+        // STEP 1: Find the user's portfolio_id from the portfolios table
+        const { data: portfolioData, error: portError } = await supabase
+            .from('portfolios')
+            .select('portfolio_id')
+            .eq('user_id', user_id)
+            .single();
+
+        if (portError || !portfolioData) {
+            return res.status(400).json({ error: "Could not find a portfolio for this user." });
+        }
+
+        // STEP 2: Delete all transactions linked to that specific portfolio_id
+        const { error: deleteError } = await supabase
+            .from('transactions')
+            .delete()
+            .eq('portfolio_id', portfolioData.portfolio_id);
+            
+        if (deleteError) throw deleteError;
+        
+        res.json({ status: "success", message: "Portfolio wiped successfully." });
+    } catch (error) {
+        console.error("Wipe Error:", error);
+        res.status(500).json({ error: "Failed to wipe portfolio." });
     }
 });
 

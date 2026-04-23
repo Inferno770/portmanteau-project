@@ -20,20 +20,20 @@ export default function LoginScreen() {
 
     // --- CLIENT-SIDE VALIDATION ---
     if (!email || !password) {
-      setAuthError("❌ Email and password are required.");
+      setAuthError("Email and password are required.");
       setAuthLoading(false);
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setAuthError("❌ Please enter a valid email address (e.g., name@domain.com).");
+      setAuthError("Please enter a valid email address (e.g., name@domain.com).");
       setAuthLoading(false);
       return;
     }
     
     if (!isLoginMode && password.length < 6) {
-      setAuthError("❌ Password must be at least 6 characters long.");
+      setAuthError("Password must be at least 6 characters long.");
       setAuthLoading(false);
       return;
     }
@@ -42,7 +42,7 @@ export default function LoginScreen() {
     const endpoint = isLoginMode ? '/api/auth/login' : '/api/auth/register';
     
     try {
-      const response = await fetch(`http://localhost:3000${endpoint}`, {
+      const response = await fetch(`http://192.168.1.217:3000${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -56,7 +56,7 @@ export default function LoginScreen() {
         } else {
           setToken(data.token);
           setUserId(data.user_id);
-          setUserEmail(email); // <-- WE SAVE THEIR EMAIL HERE!
+          setUserEmail(email); 
           router.replace('/dashboard');
         }
       } else {
