@@ -5,7 +5,8 @@ import { AuthContext } from './_layout';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { setUserId, setToken } = useContext(AuthContext);
+  // We grab our new setUserEmail function from the context!
+  const { setUserId, setToken, setUserEmail } = useContext(AuthContext);
   
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [email, setEmail] = useState('');
@@ -16,6 +17,28 @@ export default function LoginScreen() {
   const handleAuth = async () => {
     setAuthLoading(true);
     setAuthError(null);
+
+    // --- CLIENT-SIDE VALIDATION ---
+    if (!email || !password) {
+      setAuthError("❌ Email and password are required.");
+      setAuthLoading(false);
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setAuthError("❌ Please enter a valid email address (e.g., name@domain.com).");
+      setAuthLoading(false);
+      return;
+    }
+    
+    if (!isLoginMode && password.length < 6) {
+      setAuthError("❌ Password must be at least 6 characters long.");
+      setAuthLoading(false);
+      return;
+    }
+    // ==========================================
+
     const endpoint = isLoginMode ? '/api/auth/login' : '/api/auth/register';
     
     try {
@@ -33,7 +56,8 @@ export default function LoginScreen() {
         } else {
           setToken(data.token);
           setUserId(data.user_id);
-          router.replace('/dashboard'); // Go to dashboard!
+          setUserEmail(email); // <-- WE SAVE THEIR EMAIL HERE!
+          router.replace('/dashboard');
         }
       } else {
         setAuthError(data.error || "Authentication failed.");
@@ -75,7 +99,7 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  authContainer: {flex: 1, backgroundColor: '#f5f7fa', justifyContent: 'center', alignItems: 'center', padding: 20, width: '100%', maxWidth: 600, alignSelf: 'center'},
+  authContainer: { flex: 1, backgroundColor: '#f5f7fa', justifyContent: 'center', alignItems: 'center', padding: 20 }, // <-- Fixed UI!
   authCard: { backgroundColor: 'white', padding: 30, borderRadius: 16, width: '100%', maxWidth: 400, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 4 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#4a76a8', textAlign: 'center', marginBottom: 5 },
   subtitle: { fontSize: 16, color: '#666', textAlign: 'center', marginBottom: 20 },

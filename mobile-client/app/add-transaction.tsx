@@ -35,7 +35,7 @@ export default function AddTransaction() {
 
   const handleAddTransaction = async () => {
     if (!ticker || !quantity) {
-      setTxMessage("❌ Please enter a Ticker and Quantity."); return;
+      setTxMessage("Please enter a Ticker and Quantity."); return;
     }
 
     const qtyNumber = parseFloat(quantity);
@@ -45,11 +45,11 @@ export default function AddTransaction() {
     if (txType === 'SELL') {
       const ownedAsset = currentHoldings.find(h => h.ticker === tickerUpper);
       if (!ownedAsset) {
-        setTxMessage(`❌ You do not own any shares of ${tickerUpper} to sell.`);
+        setTxMessage(`You do not own any shares of ${tickerUpper} to sell.`);
         return;
       }
       if (qtyNumber > ownedAsset.shares) {
-        setTxMessage(`❌ You only own ${ownedAsset.shares} shares of ${tickerUpper}. You cannot sell ${qtyNumber}.`);
+        setTxMessage(`You only own ${ownedAsset.shares} shares of ${tickerUpper}. You cannot sell ${qtyNumber}.`);
         return;
       }
     }
@@ -66,14 +66,14 @@ export default function AddTransaction() {
       const data = await response.json();
       
       if (data.status === 'success') {
-        setTxMessage(`✅ Successfully executed ${txType} for ${quantity} shares of ${tickerUpper} at market price ($${data.executed_price})`);
+        setTxMessage(`Successfully executed ${txType} for ${quantity} shares of ${tickerUpper} at market price ($${data.executed_price})`);
         setTicker(''); setQuantity('');
         fetchCurrentHoldings(); 
       } else {
-        setTxMessage(`❌ ${data.error}`);
+        setTxMessage(`${data.error}`);
       }
     } catch (err) {
-      setTxMessage("❌ Failed to reach database.");
+      setTxMessage("Failed to reach database.");
     } finally {
       setTxLoading(false);
     }

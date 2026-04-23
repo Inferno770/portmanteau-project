@@ -7,11 +7,11 @@ export const AuthContext = createContext<any>(null);
 export default function Layout() {
   const [userId, setUserId] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null); // <-- NEW!
 
   return (
-    <AuthContext.Provider value={{ userId, setUserId, token, setToken }}>
+    <AuthContext.Provider value={{ userId, setUserId, token, setToken, userEmail, setUserEmail }}>
       <Stack screenOptions={{ headerShown: false }}>
-        {/* We define our screens here */}
         <Stack.Screen name="index" />
         <Stack.Screen name="dashboard" />
         <Stack.Screen name="add-transaction" />

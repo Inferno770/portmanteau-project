@@ -5,27 +5,36 @@ import { AuthContext } from '../app/_layout';
 
 export default function SideMenu({ visible, onClose }: { visible: boolean, onClose: () => void }) {
   const router = useRouter();
-  const { setToken, setUserId } = useContext(AuthContext);
+  
+  // Bring in the userEmail!
+  const { setToken, setUserId, userEmail, setUserEmail } = useContext(AuthContext);
 
   const handleLogout = () => {
     setToken(null);
     setUserId(null);
+    setUserEmail(null);
     onClose();
     router.replace('/');
   };
 
   const navigate = (path: any) => {
-    onClose(); // Close the menu
-    router.push(path); // Go to the new page
+    onClose(); 
+    router.push(path); 
   };
+
+  // Format the username: if email is "alex@gmail.com", the name becomes "Alex"
+  const formattedName = userEmail ? userEmail.split('@')[0] : 'Investor';
+  // Capitalize the first letter for a nice touch
+  const displayName = formattedName.charAt(0).toUpperCase() + formattedName.slice(1);
+  const firstInitial = displayName.charAt(0);
 
   return (
     <Modal visible={visible} animationType="fade" transparent={true} onRequestClose={onClose}>
       <View style={styles.overlay}>
         
-        {/* 1. The actual white side panel (Moved to the top so it renders on the LEFT) */}
         <View style={styles.drawer}>
           <SafeAreaView style={{ flex: 1, justifyContent: 'space-between' }}>
+            
             <View>
               <View style={styles.header}>
                 <Text style={styles.headerTitle}>Portmanteau</Text>
@@ -49,10 +58,11 @@ export default function SideMenu({ visible, onClose }: { visible: boolean, onClo
 
             <View style={styles.profileBar}>
               <View style={styles.profileInfo}>
-                <View style={styles.avatar}><Text style={styles.avatarText}>P</Text></View>
+                <View style={styles.avatar}><Text style={styles.avatarText}>{firstInitial}</Text></View>
                 <View>
-                    <Text style={styles.profileName}>Professor</Text>
-                    <Text style={styles.profileRole}>Admin User</Text>
+                    {/* The dynamic name and updated role! */}
+                    <Text style={styles.profileName}>{displayName}</Text>
+                    <Text style={styles.profileRole}>Portfolio Manager</Text>
                 </View>
               </View>
               <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
@@ -62,6 +72,7 @@ export default function SideMenu({ visible, onClose }: { visible: boolean, onClo
 
           </SafeAreaView>
         </View>
+
         <TouchableOpacity style={styles.closeArea} onPress={onClose} activeOpacity={1} />
         
       </View>
