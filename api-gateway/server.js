@@ -46,6 +46,23 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
+app.put('/api/auth/password', async (req, res) => {
+    try {
+        const { user_id, new_password } = req.body;
+        if (!new_password || new_password.length < 6) {
+            return res.status(400).json({ error: "Password must be at least 6 characters." });
+        }
+        
+        const password_hash = await bcrypt.hash(new_password, 10);
+        const { error } = await supabase.from('users').update({ password_hash }).eq('user_id', user_id);
+        
+        if (error) throw error;
+        res.json({ status: "success", message: "Password updated successfully." });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to update password." });
+    }
+});
+
 // --- DASHBOARD SUMMARY ROUTE ---
 app.post('/api/portfolio/summary', async (req, res) => {
     try {

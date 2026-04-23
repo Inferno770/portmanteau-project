@@ -6,8 +6,8 @@ import { AuthContext } from '../app/_layout';
 export default function SideMenu({ visible, onClose }: { visible: boolean, onClose: () => void }) {
   const router = useRouter();
   
-  // Bring in the userEmail!
-  const { setToken, setUserId, userEmail, setUserEmail } = useContext(AuthContext);
+  // Combined all the variables into a single context call!
+  const { setToken, setUserId, userEmail, setUserEmail, customName } = useContext(AuthContext);
 
   const handleLogout = () => {
     setToken(null);
@@ -22,8 +22,8 @@ export default function SideMenu({ visible, onClose }: { visible: boolean, onClo
     router.push(path); 
   };
 
-  // Format the username: if email is "alex@gmail.com", the name becomes "Alex"
-  const formattedName = userEmail ? userEmail.split('@')[0] : 'Investor';
+  // Format the username: Use customName if it exists, otherwise fallback to the email trick
+  const formattedName = customName ? customName : (userEmail ? userEmail.split('@')[0] : 'Investor');
   // Capitalize the first letter for a nice touch
   const displayName = formattedName.charAt(0).toUpperCase() + formattedName.slice(1);
   const firstInitial = displayName.charAt(0);
@@ -54,13 +54,18 @@ export default function SideMenu({ visible, onClose }: { visible: boolean, onClo
                 <Text style={styles.navIcon}>➕</Text>
                 <Text style={styles.navText}>Add Transaction</Text>
               </TouchableOpacity>
+
+              {/* Added the Settings button here! */}
+              <TouchableOpacity style={styles.navItem} onPress={() => navigate('/settings')}>
+                <Text style={styles.navIcon}>⚙️</Text>
+                <Text style={styles.navText}>Settings</Text>
+              </TouchableOpacity>
             </View>
 
             <View style={styles.profileBar}>
               <View style={styles.profileInfo}>
                 <View style={styles.avatar}><Text style={styles.avatarText}>{firstInitial}</Text></View>
                 <View>
-                    {/* The dynamic name and updated role! */}
                     <Text style={styles.profileName}>{displayName}</Text>
                     <Text style={styles.profileRole}>Portfolio Manager</Text>
                 </View>

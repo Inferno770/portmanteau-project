@@ -61,18 +61,18 @@ npx expo start -c
 
 ### How to Use
 
-1. Register/Login: Create an account with a valid email. Your username is automatically generated and formatted from your email address.
+1. **Register/Login**: Create an account with a valid email. Your username is automatically generated and formatted from your email address.
 
-2. Dashboard: View your current Asset Allocation pie chart and live Profit/Loss (ROI) percentages calculated against current market prices.
+2. **Dashboard**: View your current Asset Allocation pie chart and live Profit/Loss (ROI) percentages calculated against current market prices.
 
-3. Add Transaction: Use the "Market Order" form. Simply type a ticker (or use a quick-select chip) and a quantity. The system fetches the live price automatically.
+3. **Add Transaction**: Use the "Market Order" form. Simply type a ticker (or use a quick-select chip) and a quantity. The system fetches the live price automatically.
 
-4. Optimise: Navigate via the Side Menu to see your portfolio's Beta, Sharpe Ratio, and the suggested trades needed to reach the Efficient Frontier.
+4. **Optimise**: Navigate via the Side Menu to see your portfolio's Beta, Sharpe Ratio, and the suggested trades needed to reach the Efficient Frontier.
 
 ### Known Limitations
 
-* Market Latency: As the system uses the yfinance library for real-time pricing, slight delays or "Analysis Errors" may occur during high-volatility sessions or if ticker symbols are invalid.
+* **Market Latency**: As the system uses the yfinance library for real-time pricing, slight delays or "Analysis Errors" may occur during high-volatility sessions or if ticker symbols are invalid.
 
-* Ticker Symbols: Cryptocurrency assets require a -USD suffix (e.g., BTC-USD) for accurate price discovery within the Yahoo Finance API.
+* **Ticker Symbols**: Cryptocurrency assets require a -USD suffix (e.g., BTC-USD) for accurate price discovery within the Yahoo Finance API.
 
-* Historical Snapshots: Performance history is currently calculated based on live price movements of current holdings
+* **Historical Snapshots**: Performance history is currently calculated based on live price movements of current holdings
