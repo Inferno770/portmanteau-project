@@ -42,7 +42,7 @@ export default function LoginScreen() {
     const endpoint = isLoginMode ? '/api/auth/login' : '/api/auth/register';
     
     try {
-      const response = await fetch(`http://192.168.1.217:3000${endpoint}`, {
+      const response = await fetch(`http://localhost:3000${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

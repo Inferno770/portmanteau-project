@@ -30,7 +30,7 @@ export default function SettingsScreen() {
       return;
     }
     try {
-      const res = await fetch(`http://127.0.0.1:3000/api/auth/password`, { 
+      const res = await fetch(`http://localhost:3000/api/auth/password`, { 
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId, new_password: newPassword })
       });
@@ -50,7 +50,7 @@ export default function SettingsScreen() {
   const handleExportCSV = async () => {
     try {
       // 1. Fetch current portfolio
-      const res = await fetch(`http://127.0.0.1:3000/api/portfolio/summary`, { // UPDATE WITH YOUR IP IF TESTING ON PHONE
+      const res = await fetch(`http://localhost:3000/api/portfolio/summary`, { // UPDATE WITH YOUR IP IF TESTING ON PHONE
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId })
       });
       const data = await res.json();
@@ -87,7 +87,7 @@ export default function SettingsScreen() {
       { text: "Cancel", style: "cancel" },
       { text: "Wipe It", style: "destructive", onPress: async () => {
           try {
-            await fetch(`http://127.0.0.1:3000/api/portfolio/reset`, { 
+            await fetch(`http://localhost:3000/api/portfolio/reset`, { 
               method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId })
             });
             Alert.alert("Success", "Portfolio wiped clean.");
@@ -153,11 +153,11 @@ export default function SettingsScreen() {
         <Text style={[styles.sectionTitle, isDark && styles.darkText]}>Data Management</Text>
         <View style={[styles.card, isDark && styles.darkCard]}>
           <TouchableOpacity style={styles.exportBtn} onPress={handleExportCSV}>
-            <Text style={styles.exportBtnText}>📥 Export Portfolio (CSV)</Text>
+            <Text style={styles.exportBtnText}>Export Portfolio (CSV)</Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.dangerBtn} onPress={handleWipeData}>
-            <Text style={styles.dangerBtnText}>⚠️ Clear All Transactions</Text>
+            <Text style={styles.dangerBtnText}>Clear All Transactions</Text>
           </TouchableOpacity>
         </View>
 
@@ -168,7 +168,7 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, width: '100%', maxWidth: 600, alignSelf: 'center' },
+  container: { flex: 1, backgroundColor: '#f5f7fa' },
   lightBg: { backgroundColor: '#f5f7fa' }, darkBg: { backgroundColor: '#121212' },
   blueHeader: { backgroundColor: '#4a76a8', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, paddingTop: 50, paddingBottom: 20 },
   headerTitle: { color: 'white', fontSize: 18, fontWeight: 'bold' },
@@ -180,8 +180,8 @@ const styles = StyleSheet.create({
   darkText: { color: '#f0f0f0' },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   label: { fontSize: 16, fontWeight: '600', color: '#555', marginBottom: 8 },
-  btnGroup: { flexDirection: 'row' },
-  toggleBtn: { paddingVertical: 6, paddingHorizontal: 15, borderWidth: 1, borderColor: '#ddd', backgroundColor: '#f8f9fa' },
+  btnGroup: { flexDirection: 'row', gap: 8 },
+  toggleBtn: { paddingVertical: 8, paddingHorizontal: 18, borderWidth: 1, borderColor: '#ddd', backgroundColor: '#f8f9fa', borderRadius: 20 },
   activeBtn: { backgroundColor: '#4a76a8', borderColor: '#4a76a8' },
   toggleText: { color: '#666', fontWeight: '600' },
   activeText: { color: 'white' },

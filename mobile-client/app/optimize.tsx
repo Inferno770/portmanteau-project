@@ -7,7 +7,8 @@ import SideMenu from '../components/SideMenu';
 
 export default function OptimizeScreen() {
   const router = useRouter();
-  const { userId } = useContext(AuthContext);
+  // Extracted theme!
+  const { userId, theme } = useContext(AuthContext);
   const screenWidth = Dimensions.get("window").width;
 
   const [optimizationData, setOptimizationData] = useState<any>(null);
@@ -21,7 +22,7 @@ export default function OptimizeScreen() {
 
   const fetchOptimization = async () => {
     try {
-      const response = await fetch('http://192.168.1.217:3000/api/portfolio/optimize', {
+      const response = await fetch('http://localhost:3000/api/portfolio/optimize', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId }), 
       });
       const data = await response.json();
@@ -37,16 +38,11 @@ export default function OptimizeScreen() {
     }
   };
 
-  // ==========================================
-  // --- DATA PROCESSING FOR THE CHART ---
-  // ==========================================
   let chartData = [0]; 
   let chartLabels = [""];
 
   if (optimizationData) {
     const rawData = optimizationData.original_math.efficient_frontier_data;
-    
-    // 1. Find the point with the absolute minimum risk (volatility)
     let minVolIndex = 0;
     let minVol = Infinity;
     rawData.forEach((pt: any, i: number) => {
@@ -56,13 +52,9 @@ export default function OptimizeScreen() {
         }
     });
 
-    // 2. The "Efficient" frontier only consists of the points ABOVE the minimum risk point.
     const efficientPart = rawData.slice(minVolIndex);
-
-    // 3. Map the Y-axis (Returns) and X-axis (Risk labels)
     chartData = efficientPart.map((pt: any) => pt.y * 100);
     chartLabels = efficientPart.map((pt: any, index: number) => {
-        // Only show 5 or 6 labels on the X-axis so it doesn't get cluttered
         if (index % Math.ceil(efficientPart.length / 5) === 0 || index === efficientPart.length - 1) {
             return (pt.x * 100).toFixed(1) + "%";
         }
@@ -70,9 +62,11 @@ export default function OptimizeScreen() {
     });
   }
 
+  const isDark = theme === 'dark';
+
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.blueHeader}>
+    <SafeAreaView style={[styles.container, isDark ? styles.darkBg : styles.lightBg]}>
+      <View style={[styles.blueHeader, isDark && styles.darkHeader]}>
         <TouchableOpacity onPress={() => setMenuVisible(true)} style={{ padding: 5 }}>
           <Text style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>≡</Text>
         </TouchableOpacity>
@@ -82,18 +76,16 @@ export default function OptimizeScreen() {
 
       <ScrollView style={styles.content}>
         {loading ? (
-          <View style={{marginTop: 50}}><ActivityIndicator size="large" color="#4a76a8" /><Text style={{textAlign: 'center', marginTop: 10}}>Running Python SciPy Engine...</Text></View>
+          <View style={{marginTop: 50}}><ActivityIndicator size="large" color="#4a76a8" /><Text style={{textAlign: 'center', marginTop: 10, color: isDark ? '#ccc' : '#333'}}>Running Python SciPy Engine...</Text></View>
         ) : error ? (
           <Text style={styles.errorText}>{error}</Text>
         ) : optimizationData ? (
           <>
-            {/* --- CHART SECTION --- */}
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>The Efficient Frontier</Text>
+            <View style={[styles.card, isDark && styles.darkCard]}>
+              <Text style={[styles.cardTitle, isDark && styles.darkText]}>The Efficient Frontier</Text>
               
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                {/* Y-Axis Label */}
-                <Text style={{ transform: [{ rotate: '-90deg' }], width: 100, textAlign: 'center', marginLeft: -40, marginRight: -30, fontSize: 12, color: '#666', fontWeight: 'bold' }}>
+                <Text style={{ transform: [{ rotate: '-90deg' }], width: 100, textAlign: 'center', marginLeft: -40, marginRight: -30, fontSize: 12, color: isDark ? '#aaa' : '#666', fontWeight: 'bold' }}>
                   Expected Return
                 </Text>
                 
@@ -108,9 +100,11 @@ export default function OptimizeScreen() {
                   withInnerLines={true} 
                   withOuterLines={false}
                   chartConfig={{
-                    backgroundColor: "#ffffff", backgroundGradientFrom: "#ffffff", backgroundGradientTo: "#ffffff",
+                    backgroundColor: isDark ? "#1e1e1e" : "#ffffff", 
+                    backgroundGradientFrom: isDark ? "#1e1e1e" : "#ffffff", 
+                    backgroundGradientTo: isDark ? "#1e1e1e" : "#ffffff",
                     color: (opacity = 1) => `rgba(74, 118, 168, ${opacity})`, 
-                    labelColor: () => `#888`,
+                    labelColor: () => isDark ? `#ccc` : `#888`, // Adjusts axis text
                     propsForDots: { r: "4", strokeWidth: "2", stroke: "#4a76a8" },
                     decimalPlaces: 1
                   }}
@@ -118,45 +112,42 @@ export default function OptimizeScreen() {
                   style={{ marginVertical: 10, borderRadius: 16 }}
                 />
               </View>
-              {/* X-Axis Label */}
-              <Text style={{ textAlign: 'center', color: '#666', fontSize: 12, fontWeight: 'bold', marginTop: -5 }}>
+              <Text style={{ textAlign: 'center', color: isDark ? '#aaa' : '#666', fontSize: 12, fontWeight: 'bold', marginTop: -5 }}>
                 Risk (Volatility)
               </Text>
             </View>
 
-            {/* --- METRICS SECTION --- */}
             <View style={styles.metricsRow}>
-              <View style={styles.metricBox}>
+              <View style={[styles.metricBox, isDark && styles.darkCard]}>
                 <Text style={styles.metricLabel}>Sharpe</Text>
-                <Text style={styles.metricValue}>
+                <Text style={[styles.metricValue, isDark && styles.darkText]}>
                   {optimizationData.original_math.metrics.optimized_portfolio.sharpe_ratio}
                 </Text>
               </View>
-              <View style={styles.metricBox}>
+              <View style={[styles.metricBox, isDark && styles.darkCard]}>
                 <Text style={styles.metricLabel}>Risk</Text>
-                <Text style={styles.metricValue}>
+                <Text style={[styles.metricValue, isDark && styles.darkText]}>
                   {(optimizationData.original_math.metrics.optimized_portfolio.volatility_risk * 100).toFixed(1)}%
                 </Text>
               </View>
-              <View style={styles.metricBox}>
+              <View style={[styles.metricBox, isDark && styles.darkCard]}>
                 <Text style={styles.metricLabel}>Beta</Text>
-                <Text style={styles.metricValue}>
+                <Text style={[styles.metricValue, isDark && styles.darkText]}>
                   {optimizationData.original_math.metrics.optimized_portfolio.portfolio_beta}
                 </Text>
               </View>
             </View>
 
-            {/* --- ADVICE SECTION --- */}
-            <Text style={styles.sectionHeader}>Suggested Rebalancing</Text>
+            <Text style={[styles.sectionHeader, isDark && styles.darkText]}>Suggested Rebalancing</Text>
             {optimizationData.rebalancing_actions.map((action: any, index: number) => {
                 const isBuy = action.action === 'BUY';
                 return (
-                    <View key={index} style={styles.actionCard}>
+                    <View key={index} style={[styles.actionCard, isDark && styles.darkActionCard]}>
                         <View style={[styles.iconCircle, isBuy ? styles.buyBg : styles.sellBg]}>
                             <Text style={isBuy ? styles.buyText : styles.sellText}>{isBuy ? '↗' : '↘'}</Text>
                         </View>
                         <View style={{flex: 1, marginLeft: 15}}>
-                            <Text style={styles.actionText}>{action.instruction}</Text>
+                            <Text style={[styles.actionText, isDark && styles.darkText]}>{action.instruction}</Text>
                         </View>
                     </View>
                 );
@@ -170,15 +161,20 @@ export default function OptimizeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f7fa' },
+  container: { flex: 1 },
+  lightBg: { backgroundColor: '#f5f7fa' },
+  darkBg: { backgroundColor: '#121212' },
   blueHeader: { backgroundColor: '#4a76a8', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, paddingTop: 50, paddingBottom: 20 },
-  backBtn: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+  darkHeader: { backgroundColor: '#2c3e50' },
   headerTitle: { color: 'white', fontSize: 18, fontWeight: 'bold' },
   content: { padding: 15 },
   card: { backgroundColor: 'white', padding: 20, borderRadius: 15, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5, elevation: 2, marginBottom: 20 },
+  darkCard: { backgroundColor: '#1e1e1e', shadowOpacity: 0.3 },
   cardTitle: { fontSize: 18, fontWeight: 'bold', color: '#333', marginBottom: 10, alignSelf: 'flex-start' },
+  darkText: { color: '#f5f5f5' },
   sectionHeader: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 15, marginLeft: 5 },
   actionCard: { flexDirection: 'row', backgroundColor: 'white', padding: 15, borderRadius: 12, marginBottom: 10, alignItems: 'center', borderWidth: 1, borderColor: '#eee' },
+  darkActionCard: { backgroundColor: '#1e1e1e', borderColor: '#333' },
   iconCircle: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
   buyBg: { backgroundColor: '#e8f5e9' }, sellBg: { backgroundColor: '#ffebee' },
   buyText: { color: '#2ecc71', fontWeight: 'bold', fontSize: 18 }, sellText: { color: '#e74c3c', fontWeight: 'bold', fontSize: 18 },

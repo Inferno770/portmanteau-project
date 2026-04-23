@@ -6,7 +6,8 @@ import SideMenu from '../components/SideMenu';
 
 export default function AddTransaction() {
   const router = useRouter();
-  const { userId } = useContext(AuthContext);
+  // Extracted theme!
+  const { userId, theme } = useContext(AuthContext);
 
   const [ticker, setTicker] = useState('');
   const [txType, setTxType] = useState('BUY');
@@ -23,7 +24,7 @@ export default function AddTransaction() {
 
   const fetchCurrentHoldings = async () => {
     try {
-      const response = await fetch('http://192.168.1.217:3000/api/portfolio/summary', {
+      const response = await fetch('http://localhost:3000/api/portfolio/summary', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId }),
       });
       const data = await response.json();
@@ -41,7 +42,6 @@ export default function AddTransaction() {
     const qtyNumber = parseFloat(quantity);
     const tickerUpper = ticker.toUpperCase();
 
-    // SELL VALIDATION
     if (txType === 'SELL') {
       const ownedAsset = currentHoldings.find(h => h.ticker === tickerUpper);
       if (!ownedAsset) {
@@ -57,7 +57,7 @@ export default function AddTransaction() {
     setTxLoading(true); setTxMessage(null);
 
     try {
-      const response = await fetch('http://192.168.1.217:3000/api/portfolio/transaction', {
+      const response = await fetch('http://localhost:3000/api/portfolio/transaction', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId, ticker: tickerUpper, type: txType, quantity: quantity }),
@@ -85,9 +85,11 @@ export default function AddTransaction() {
     ...popularTickers
   ]));
 
+  const isDark = theme === 'dark';
+
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.blueHeader}>
+    <SafeAreaView style={[styles.container, isDark ? styles.darkBg : styles.lightBg]}>
+      <View style={[styles.blueHeader, isDark && styles.darkHeader]}>
         <TouchableOpacity onPress={() => setMenuVisible(true)} style={{ padding: 5 }}>
           <Text style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>≡</Text>
         </TouchableOpacity>
@@ -95,28 +97,28 @@ export default function AddTransaction() {
         <View style={{ width: 28 }} />
       </View>
 
-      <ScrollView style={styles.formContainer}>
-        <View style={styles.typeToggleRow}>
-          <Text style={styles.label}>Action</Text>
+      <ScrollView style={[styles.formContainer, isDark && styles.darkBg]}>
+        <View style={[styles.typeToggleRow, isDark && styles.darkBorder]}>
+          <Text style={[styles.label, isDark && styles.darkText]}>Action</Text>
           <View style={{flexDirection: 'row'}}>
-             <TouchableOpacity style={[styles.toggleBtn, txType === 'BUY' ? styles.buyActive : styles.inactive]} onPress={() => setTxType('BUY')}><Text style={txType === 'BUY' ? styles.activeText : styles.inactiveText}>BUY</Text></TouchableOpacity>
-             <TouchableOpacity style={[styles.toggleBtn, txType === 'SELL' ? styles.sellActive : styles.inactive]} onPress={() => setTxType('SELL')}><Text style={txType === 'SELL' ? styles.activeText : styles.inactiveText}>SELL</Text></TouchableOpacity>
+             <TouchableOpacity style={[styles.toggleBtn, txType === 'BUY' ? styles.buyActive : (isDark ? styles.darkInactive : styles.inactive)]} onPress={() => setTxType('BUY')}><Text style={txType === 'BUY' ? styles.activeText : (isDark ? styles.darkInactiveText : styles.inactiveText)}>BUY</Text></TouchableOpacity>
+             <TouchableOpacity style={[styles.toggleBtn, txType === 'SELL' ? styles.sellActive : (isDark ? styles.darkInactive : styles.inactive)]} onPress={() => setTxType('SELL')}><Text style={txType === 'SELL' ? styles.activeText : (isDark ? styles.darkInactiveText : styles.inactiveText)}>SELL</Text></TouchableOpacity>
           </View>
         </View>
 
-        <Text style={styles.label}>Asset Ticker</Text>
-        <TextInput style={styles.input} placeholder="e.g. AAPL" value={ticker} onChangeText={setTicker} autoCapitalize="characters" />
+        <Text style={[styles.label, isDark && styles.darkText]}>Asset Ticker</Text>
+        <TextInput style={[styles.input, isDark && styles.darkInput]} placeholder="e.g. AAPL" placeholderTextColor={isDark ? '#888' : '#aaa'} value={ticker} onChangeText={setTicker} autoCapitalize="characters" />
         
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipContainer}>
             {suggestedTickers.map(t => (
-                <TouchableOpacity key={t} style={styles.chip} onPress={() => setTicker(t)}>
-                    <Text style={styles.chipText}>{t}</Text>
+                <TouchableOpacity key={t} style={[styles.chip, isDark && styles.darkChip]} onPress={() => setTicker(t)}>
+                    <Text style={[styles.chipText, isDark && styles.darkChipText]}>{t}</Text>
                 </TouchableOpacity>
             ))}
         </ScrollView>
         
-        <Text style={styles.label}>Quantity</Text>
-        <TextInput style={styles.input} placeholder="0" value={quantity} onChangeText={setQuantity} keyboardType="numeric" />
+        <Text style={[styles.label, isDark && styles.darkText]}>Quantity</Text>
+        <TextInput style={[styles.input, isDark && styles.darkInput]} placeholder="0" placeholderTextColor={isDark ? '#888' : '#aaa'} value={quantity} onChangeText={setQuantity} keyboardType="numeric" />
         
         <Text style={styles.helperText}>* Orders are executed at the current live market price.</Text>
 
@@ -134,23 +136,33 @@ export default function AddTransaction() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f7fa' },
+  container: { flex: 1 },
+  lightBg: { backgroundColor: '#f5f7fa' },
+  darkBg: { backgroundColor: '#121212' },
   blueHeader: { backgroundColor: '#4a76a8', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, paddingTop: 50, paddingBottom: 20 },
+  darkHeader: { backgroundColor: '#2c3e50' },
   headerTitle: { color: 'white', fontSize: 18, fontWeight: 'bold' },
   formContainer: { padding: 20, backgroundColor: 'white', flex: 1 },
   label: { fontSize: 16, fontWeight: '600', color: '#333', marginBottom: 8, marginTop: 15 },
+  darkText: { color: '#f5f5f5' },
   input: { backgroundColor: '#f8f9fa', borderWidth: 1, borderColor: '#e1e4e8', padding: 15, borderRadius: 10, fontSize: 16 },
+  darkInput: { backgroundColor: '#1e1e1e', borderColor: '#333', color: '#fff' },
   helperText: { color: '#888', fontSize: 13, marginTop: 10, fontStyle: 'italic' },
   chipContainer: { flexDirection: 'row', marginTop: 10, marginBottom: 5, maxHeight: 40 },
   chip: { backgroundColor: '#eef2f5', paddingHorizontal: 15, paddingVertical: 8, borderRadius: 20, marginRight: 10, borderWidth: 1, borderColor: '#dcdfe3' },
+  darkChip: { backgroundColor: '#2c3e50', borderColor: '#1a252f' },
   chipText: { color: '#4a76a8', fontWeight: 'bold' },
+  darkChipText: { color: '#fff' },
   typeToggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 10, paddingBottom: 15, borderBottomWidth: 1, borderColor: '#eee' },
+  darkBorder: { borderBottomColor: '#333' },
   toggleBtn: { paddingVertical: 8, paddingHorizontal: 20, borderRadius: 8, marginLeft: 10, borderWidth: 1 },
   inactive: { backgroundColor: 'transparent', borderColor: '#ddd' },
+  darkInactive: { backgroundColor: 'transparent', borderColor: '#444' },
   buyActive: { backgroundColor: '#e8f5e9', borderColor: '#2ecc71' },
   sellActive: { backgroundColor: '#ffebee', borderColor: '#e74c3c' },
   activeText: { fontWeight: 'bold', color: '#333' },
   inactiveText: { color: '#888' },
+  darkInactiveText: { color: '#aaa' },
   submitBtn: { backgroundColor: '#4a76a8', padding: 18, borderRadius: 12, alignItems: 'center', marginTop: 30 },
   submitBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   message: { textAlign: 'center', marginTop: 20, fontSize: 15, fontWeight: '600' }

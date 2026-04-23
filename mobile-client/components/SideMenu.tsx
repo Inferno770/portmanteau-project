@@ -6,8 +6,8 @@ import { AuthContext } from '../app/_layout';
 export default function SideMenu({ visible, onClose }: { visible: boolean, onClose: () => void }) {
   const router = useRouter();
   
-  // Combined all the variables into a single context call!
-  const { setToken, setUserId, userEmail, setUserEmail, customName } = useContext(AuthContext);
+  // Bring in the theme!
+  const { setToken, setUserId, userEmail, setUserEmail, customName, theme } = useContext(AuthContext);
 
   const handleLogout = () => {
     setToken(null);
@@ -22,55 +22,56 @@ export default function SideMenu({ visible, onClose }: { visible: boolean, onClo
     router.push(path); 
   };
 
-  // Format the username: Use customName if it exists, otherwise fallback to the email trick
   const formattedName = customName ? customName : (userEmail ? userEmail.split('@')[0] : 'Investor');
-  // Capitalize the first letter for a nice touch
   const displayName = formattedName.charAt(0).toUpperCase() + formattedName.slice(1);
   const firstInitial = displayName.charAt(0);
+
+  const isDark = theme === 'dark';
 
   return (
     <Modal visible={visible} animationType="fade" transparent={true} onRequestClose={onClose}>
       <View style={styles.overlay}>
         
-        <View style={styles.drawer}>
+        {/* Apply Dark Background to Drawer */}
+        <View style={[styles.drawer, isDark && styles.darkDrawer]}>
           <SafeAreaView style={{ flex: 1, justifyContent: 'space-between' }}>
             
             <View>
-              <View style={styles.header}>
+              <View style={[styles.header, isDark && styles.darkHeader]}>
                 <Text style={styles.headerTitle}>Portmanteau</Text>
               </View>
 
-              <TouchableOpacity style={styles.navItem} onPress={() => navigate('/dashboard')}>
+              {/* Apply Dark Text to Links */}
+              <TouchableOpacity style={[styles.navItem, isDark && styles.darkNavItem]} onPress={() => navigate('/dashboard')}>
                 <Text style={styles.navIcon}>📊</Text>
-                <Text style={styles.navText}>Dashboard</Text>
+                <Text style={[styles.navText, isDark && styles.darkText]}>Dashboard</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.navItem} onPress={() => navigate('/optimize')}>
+              <TouchableOpacity style={[styles.navItem, isDark && styles.darkNavItem]} onPress={() => navigate('/optimize')}>
                 <Text style={styles.navIcon}>📈</Text>
-                <Text style={styles.navText}>Optimization View</Text>
+                <Text style={[styles.navText, isDark && styles.darkText]}>Optimization View</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.navItem} onPress={() => navigate('/add-transaction')}>
+              <TouchableOpacity style={[styles.navItem, isDark && styles.darkNavItem]} onPress={() => navigate('/add-transaction')}>
                 <Text style={styles.navIcon}>➕</Text>
-                <Text style={styles.navText}>Add Transaction</Text>
+                <Text style={[styles.navText, isDark && styles.darkText]}>Add Transaction</Text>
               </TouchableOpacity>
 
-              {/* Added the Settings button here! */}
-              <TouchableOpacity style={styles.navItem} onPress={() => navigate('/settings')}>
+              <TouchableOpacity style={[styles.navItem, isDark && styles.darkNavItem]} onPress={() => navigate('/settings')}>
                 <Text style={styles.navIcon}>⚙️</Text>
-                <Text style={styles.navText}>Settings</Text>
+                <Text style={[styles.navText, isDark && styles.darkText]}>Settings</Text>
               </TouchableOpacity>
             </View>
 
-            <View style={styles.profileBar}>
+            <View style={[styles.profileBar, isDark && styles.darkProfileBar]}>
               <View style={styles.profileInfo}>
-                <View style={styles.avatar}><Text style={styles.avatarText}>{firstInitial}</Text></View>
+                <View style={[styles.avatar, isDark && styles.darkAvatar]}><Text style={styles.avatarText}>{firstInitial}</Text></View>
                 <View>
-                    <Text style={styles.profileName}>{displayName}</Text>
+                    <Text style={[styles.profileName, isDark && styles.darkText]}>{displayName}</Text>
                     <Text style={styles.profileRole}>Portfolio Manager</Text>
                 </View>
               </View>
-              <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+              <TouchableOpacity style={[styles.logoutBtn, isDark && styles.darkLogoutBtn]} onPress={handleLogout}>
                 <Text style={styles.logoutText}>Log Out</Text>
               </TouchableOpacity>
             </View>
@@ -89,17 +90,24 @@ const styles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', flexDirection: 'row' },
   closeArea: { flex: 1 },
   drawer: { width: 280, backgroundColor: '#ffffff', height: '100%', shadowColor: '#000', shadowOffset: { width: 5, height: 0 }, shadowOpacity: 0.2, shadowRadius: 10, elevation: 10 },
+  darkDrawer: { backgroundColor: '#121212' },
   header: { backgroundColor: '#4a76a8', padding: 25, paddingTop: 50, borderBottomRightRadius: 20 },
+  darkHeader: { backgroundColor: '#2c3e50' },
   headerTitle: { color: 'white', fontSize: 22, fontWeight: 'bold' },
   navItem: { flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  darkNavItem: { borderBottomColor: '#333' },
   navIcon: { fontSize: 20, marginRight: 15 },
   navText: { fontSize: 16, fontWeight: '600', color: '#333' },
+  darkText: { color: '#f5f5f5' },
   profileBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 15, borderTopWidth: 1, borderTopColor: '#e0e0e0', backgroundColor: '#f8f9fa' },
+  darkProfileBar: { backgroundColor: '#1e1e1e', borderTopColor: '#333' },
   profileInfo: { flexDirection: 'row', alignItems: 'center' },
   avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#4a76a8', justifyContent: 'center', alignItems: 'center', marginRight: 10 },
+  darkAvatar: { backgroundColor: '#2c3e50' },
   avatarText: { color: 'white', fontWeight: 'bold', fontSize: 18 },
   profileName: { fontSize: 14, fontWeight: 'bold', color: '#333' },
   profileRole: { fontSize: 12, color: '#888' },
   logoutBtn: { backgroundColor: '#ffebee', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6 },
+  darkLogoutBtn: { backgroundColor: '#3a1c1c' },
   logoutText: { color: '#e74c3c', fontWeight: 'bold', fontSize: 12 }
 });
