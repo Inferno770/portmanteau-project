@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, SafeAreaView, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { AuthContext } from './_layout';
+import SideMenu from '../components/SideMenu'; 
 
 export default function AddTransaction() {
   const router = useRouter();
@@ -14,6 +15,7 @@ export default function AddTransaction() {
   const [txLoading, setTxLoading] = useState(false);
   
   const [currentHoldings, setCurrentHoldings] = useState<any[]>([]);
+  const [menuVisible, setMenuVisible] = useState(false); 
 
   useEffect(() => {
     fetchCurrentHoldings();
@@ -58,13 +60,12 @@ export default function AddTransaction() {
       const response = await fetch('http://localhost:3000/api/portfolio/transaction', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId, ticker: tickerUpper, type: txType, quantity: quantity }), // No price sent!
+        body: JSON.stringify({ user_id: userId, ticker: tickerUpper, type: txType, quantity: quantity }),
       });
       
       const data = await response.json();
       
       if (data.status === 'success') {
-        // Show the user the exact live price the backend fetched!
         setTxMessage(`✅ Successfully executed ${txType} for ${quantity} shares of ${tickerUpper} at market price ($${data.executed_price})`);
         setTicker(''); setQuantity('');
         fetchCurrentHoldings(); 
@@ -87,9 +88,11 @@ export default function AddTransaction() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.blueHeader}>
-        <TouchableOpacity onPress={() => router.back()}><Text style={styles.backBtn}>{"< Back"}</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => setMenuVisible(true)} style={{ padding: 5 }}>
+          <Text style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>≡</Text>
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Market Order</Text>
-        <View style={{width: 50}} />
+        <View style={{ width: 28 }} />
       </View>
 
       <ScrollView style={styles.formContainer}>
@@ -115,7 +118,6 @@ export default function AddTransaction() {
         <Text style={styles.label}>Quantity</Text>
         <TextInput style={styles.input} placeholder="0" value={quantity} onChangeText={setQuantity} keyboardType="numeric" />
         
-        {/* Notice: The Price Input Box is completely gone! */}
         <Text style={styles.helperText}>* Orders are executed at the current live market price.</Text>
 
         {txMessage && <Text style={[styles.message, txMessage.includes('❌') ? {color: '#e74c3c'} : {color: '#2ecc71'}]}>{txMessage}</Text>}
@@ -126,6 +128,7 @@ export default function AddTransaction() {
             </TouchableOpacity>
         )}
       </ScrollView>
+      <SideMenu visible={menuVisible} onClose={() => setMenuVisible(false)} />
     </SafeAreaView>
   );
 }
@@ -133,7 +136,6 @@ export default function AddTransaction() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f7fa', width: '100%', maxWidth: 600, alignSelf: 'center' },
   blueHeader: { backgroundColor: '#4a76a8', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, paddingTop: 50, paddingBottom: 20 },
-  backBtn: { color: 'white', fontWeight: 'bold', fontSize: 16 },
   headerTitle: { color: 'white', fontSize: 18, fontWeight: 'bold' },
   formContainer: { padding: 20, backgroundColor: 'white', flex: 1 },
   label: { fontSize: 16, fontWeight: '600', color: '#333', marginBottom: 8, marginTop: 15 },

@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ActivityIndicator
 import { LineChart } from 'react-native-chart-kit';
 import { useRouter } from 'expo-router';
 import { AuthContext } from './_layout';
+import SideMenu from '../components/SideMenu';
 
 export default function OptimizeScreen() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function OptimizeScreen() {
   const [optimizationData, setOptimizationData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   useEffect(() => {
     fetchOptimization();
@@ -71,9 +73,11 @@ export default function OptimizeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.blueHeader}>
-        <TouchableOpacity onPress={() => router.back()}><Text style={styles.backBtn}>{"< Back"}</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => setMenuVisible(true)} style={{ padding: 5 }}>
+          <Text style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>≡</Text>
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Optimization View</Text>
-        <View style={{width: 50}} />
+        <View style={{ width: 28 }} />
       </View>
 
       <ScrollView style={styles.content}>
@@ -160,6 +164,7 @@ export default function OptimizeScreen() {
           </>
         ) : null}
       </ScrollView>
+      <SideMenu visible={menuVisible} onClose={() => setMenuVisible(false)} />
     </SafeAreaView>
   );
 }

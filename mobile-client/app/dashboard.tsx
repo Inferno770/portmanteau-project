@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, SafeAreaView, Dim
 import { PieChart } from 'react-native-chart-kit';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { AuthContext } from './_layout';
+import SideMenu from '../components/SideMenu';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -13,6 +14,7 @@ export default function Dashboard() {
   const [totalLiveValue, setTotalLiveValue] = useState(0);
   const [totalReturn, setTotalReturn] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -53,7 +55,14 @@ export default function Dashboard() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.blueHeader}>
-        <Text style={styles.headerTitle}>Portmanteau</Text>
+        {/* Top row with Hamburger, Title, and a spacer to keep it centered */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => setMenuVisible(true)} style={{ padding: 5 }}>
+            <Text style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>≡</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Portmanteau</Text>
+          <View style={{ width: 28 }} />
+        </View>
         <View style={styles.valueCard}>
           <Text style={styles.label}>Total Account Value</Text>
           <View style={styles.valueRow}>
@@ -128,6 +137,7 @@ export default function Dashboard() {
           <Text style={styles.navButtonText}>Optimize Portfolio</Text>
         </TouchableOpacity>
       </ScrollView>
+      <SideMenu visible={menuVisible} onClose={() => setMenuVisible(false)} />
     </SafeAreaView>
   );
 }
