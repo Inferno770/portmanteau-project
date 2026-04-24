@@ -61,19 +61,36 @@ export default function SettingsScreen() {
         csvString += `${h.ticker},${h.shares},${h.invested_value},${h.live_value},${h.percent_return.toFixed(2)}\n`;
       });
 
-      // 3. Brute force the FileSystem write
-      const dir = (FileSystem as any).documentDirectory;
-      const fileUri = dir + "Portmanteau_Export.csv";
-      
-      await (FileSystem as any).writeAsStringAsync(fileUri, csvString);
-      await (Sharing as any).shareAsync(fileUri);
+      // 3. Platform Specific Download
+      if (Platform.OS === 'web') {
+        // --- WEB BROWSER DOWNLOAD LOGIC ---
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'Portmanteau_Export.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        // --- MOBILE PHONE SHARE LOGIC ---
+        const dir = (FileSystem as any).documentDirectory;
+        const fileUri = dir + "Portmanteau_Export.csv";
+        
+        await (FileSystem as any).writeAsStringAsync(fileUri, csvString);
+        await (Sharing as any).shareAsync(fileUri);
+      }
       
     } catch (e: any) {
       console.error("CSV Crash Log:", e);
-      Alert.alert("Export Error", String(e.message || e));
+      // Cross-platform error handling!
+      if (Platform.OS === 'web') {
+        window.alert("Export Error: " + String(e.message || e));
+      } else {
+        Alert.alert("Export Error", String(e.message || e));
+      }
     }
   };
-
   // --- WIPE PORTFOLIO ---
   const handleWipeData = () => {
     
