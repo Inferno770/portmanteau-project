@@ -1,33 +1,45 @@
-# Portmanteau: Advanced Financial Portfolio Optimizer
-
-**Video Demonstration:** [Insert YouTube Link Here]
+# Portmanteau: Advanced Financial Portfolio Optimiser
 
 ### What the software does
-Portmanteau is a professional-grade financial decision-support system. It replaces fragmented spreadsheet tracking with a unified dashboard that utilizes **Modern Portfolio Theory (MPT)**. By running Mean-Variance Optimization algorithms, the system provides actionable, algorithmic rebalancing insights, helping investors move their holdings toward the "Efficient Frontier" to maximize returns for a given level of risk.
+Portmanteau is a professional-grade financial decision-support system. It replaces fragmented spreadsheet tracking with a unified dashboard that utilises **Modern Portfolio Theory (MPT)**. By running Mean-Variance Optimisation algorithms, the system provides actionable, algorithmic rebalancing insights, helping investors move their holdings toward the "Efficient Frontier" to maximise returns for a given level of risk.
 
 ---
 
 ### Core Features Implemented
-* **Responsive Cross-Platform UI:** A fluid React Native interface that scales from desktop browsers to physical mobile devices, featuring a custom side-navigation drawer and dynamic user themes.
-* **Microservice Architecture:** * **Node.js API Gateway:** Manages user authentication, database orchestration via Supabase, and core transaction logic.
-    * **Python Analytics Engine:** A decoupled service using `SciPy` and `NumPy` to solve complex matrix algebra for portfolio optimization.
+* **Cloud-Distributed Microservice Architecture:** * **Node.js API Gateway (Render):** Manages user authentication, database orchestration via Supabase, and core transaction logic.
+    * **Python Analytics Engine (PythonAnywhere):** A decoupled service using `SciPy` and `NumPy` to solve complex matrix algebra for portfolio optimisation without blocking the main event loop.
+* **Responsive Cross-Platform UI:** A fluid React Native interface that scales from desktop browsers to physical mobile devices, featuring a custom side-navigation drawer and global state management via the Context API.
+* **Dynamic Theming & Settings:** Users can toggle between Light and Dark modes, which instantly updates all UI components, charts, and native inputs across the application.
 * **Automated Market Orders:** Users no longer manually enter stock prices. The system fetches live market data via a custom price-discovery route in the Python engine using the `yfinance` API.
-* **Visual Analytics:** Includes dynamic **Portfolio Allocation Pie Charts** for current holdings and a filtered **Efficient Frontier Line Chart** to visualize the risk/return profile of the optimized portfolio.
-* **Secure Authentication:** Implements JWT session management, Bcrypt password hashing, and client-side Regex email validation for a robust security posture.
-* **Business Logic Validation:** Advanced "Short-Sell" protection prevents users from selling assets they do not currently own or exceeding their current owned quantity.
+* **Visual Analytics:** Includes dynamic **Portfolio Allocation Pie Charts** for current holdings and a filtered **Efficient Frontier Line Chart** to visualise the risk/return profile of the optimised portfolio.
+* **Cross-Platform Data Management:** Features context-aware CSV exporting that utilises native iOS/Android file sharing on mobile, and direct blob downloads on web browsers. Includes full relational cascade deletion allowing users to safely wipe all transaction history.
+* **Business Logic & Security:** Advanced "Short-Sell" protection prevents users from selling assets they do not currently own. Implements JWT session management and Bcrypt password hashing.
 
 ---
 
 ### Tech Stack
 * **Frontend:** React Native (Expo Router), React Context API, React Native Chart Kit.
 * **Backend:** Node.js (Express), Python 3.10 (Flask).
-* **Data Science:** Pandas, NumPy, SciPy (Optimization), yfinance.
+* **Data Science:** Pandas, NumPy, SciPy (Optimisation), yfinance.
 * **Database:** PostgreSQL (Supabase) with JWT-protected relational schemas.
+* **Cloud Deployment:** Render (API Gateway), PythonAnywhere (Analytics Engine).
 
 ---
 
 ### Setup and Run Instructions
-To run this system locally, you must start the backend microservices before launching the mobile client.
+
+**Quick Start (Cloud Connected)**
+Because the Node.js API Gateway and Python Analytics Engine are actively deployed to the cloud, **you only need to run the Mobile Client** to test the full system.
+
+```bash
+cd mobile-client
+npm install
+npx expo start -c
+```
+
+### Full Local Development Setup
+
+If you wish to run the entire microservice architecture locally, you must start the backend services before launching the mobile client.
 
 **1. Configuration (Environment Variables)**
 Create a `.env` file inside the `api-gateway/` folder and paste the following testing credentials:
@@ -67,7 +79,9 @@ npx expo start -c
 
 3. **Add Transaction**: Use the "Market Order" form. Simply type a ticker (or use a quick-select chip) and a quantity. The system fetches the live price automatically.
 
-4. **Optimise**: Navigate via the Side Menu to see your portfolio's Beta, Sharpe Ratio, and the suggested trades needed to reach the Efficient Frontier.
+4. **Optimisation View**: Navigate via the Side Menu to see your portfolio's Beta, Sharpe Ratio, and the suggested trades needed to reach the Efficient Frontier.
+
+5. **Settings**: Toggle Dark Mode, visually adjust your preferred currency, export your live portfolio to a `.csv` spreadsheet, or execute a database wipe to start fresh.
 
 ### Known Limitations
 
