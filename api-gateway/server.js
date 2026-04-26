@@ -149,19 +149,26 @@ app.post('/api/portfolio/summary', async (req, res) => {
 // --- MANUAL TRANSACTION ROUTE ---
 app.post('/api/portfolio/transaction', async (req, res) => {
     try {
-        // Notice: We no longer ask the frontend for the 'price'!
-        const { user_id, ticker, type, quantity } = req.body; 
+        // Accept custom_price from the frontend
+        const { user_id, ticker, type, quantity, custom_price } = req.body; 
         
         if (!user_id || !ticker || !type || !quantity) {
              return res.status(400).json({ error: "Ticker and Quantity are required." });
         }
 
-        // 1. Ask Python for the live market price
-        console.log(`[Node.js] Fetching live market price for ${ticker}...`);
-        const pythonResponse = await axios.post('https://HadiAhmad.pythonanywhere.com/price', { ticker });
-        const livePrice = pythonResponse.data.price;
+        let executionPrice = null;
 
-        if (!livePrice) throw new Error("Could not fetch live price.");
+        // Logic Check - Use custom price, or fetch live price?
+        if (custom_price && custom_price > 0) {
+            executionPrice = custom_price;
+            console.log(`[Node.js] Using custom execution price: $${executionPrice}`);
+        } else {
+            console.log(`[Node.js] Fetching live market price for ${ticker}...`);
+            const pythonResponse = await axios.post('https://HadiAhmad.pythonanywhere.com/price', { ticker });
+            executionPrice = pythonResponse.data.price;
+        }
+
+        if (!executionPrice) throw new Error("Could not determine execution price.");
 
         // 2. Find Portfolio
         const { data: portfolio } = await supabase.from('portfolios').select('portfolio_id').eq('user_id', user_id).single();
@@ -173,17 +180,16 @@ app.post('/api/portfolio/transaction', async (req, res) => {
             asset = newAsset;
         }
 
-        // 4. Save Transaction using the LIVE PRICE
+        // 4. Save Transaction using the chosen Execution Price
         await supabase.from('transactions').insert([{
             portfolio_id: portfolio.portfolio_id, 
             asset_id: asset.asset_id, 
             transaction_type: type, 
             quantity: parseFloat(quantity), 
-            price_per_unit: livePrice 
+            price_per_unit: executionPrice // <--- Uses the smart price
         }]);
 
-        // Send the live price back to the frontend so the user knows what they paid
-        res.status(201).json({ status: "success", executed_price: livePrice });
+        res.status(201).json({ status: "success", executed_price: executionPrice });
     } catch (error) {
         console.error("[Transaction Error]", error.message);
         const errorMsg = error.response && error.response.data ? error.response.data.error : "Failed to add transaction";

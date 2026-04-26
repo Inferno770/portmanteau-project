@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, SafeAreaView, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, SafeAreaView, ScrollView, Platform, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { AuthContext } from './_layout';
 import SideMenu from '../components/SideMenu'; 
@@ -11,6 +11,8 @@ export default function AddTransaction() {
   const [ticker, setTicker] = useState('');
   const [txType, setTxType] = useState('BUY');
   const [quantity, setQuantity] = useState('');
+  // NEW: State for our custom price override
+  const [customPrice, setCustomPrice] = useState(''); 
   const [txMessage, setTxMessage] = useState<string | null>(null);
   const [txLoading, setTxLoading] = useState(false);
   
@@ -23,6 +25,7 @@ export default function AddTransaction() {
 
   const fetchCurrentHoldings = async () => {
     try {
+      // REMEMBER: Keep your Render URL here!
       const response = await fetch('https://portmanteau-project.onrender.com/api/portfolio/summary', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId }),
       });
@@ -55,18 +58,29 @@ export default function AddTransaction() {
 
     setTxLoading(true); setTxMessage(null);
 
+    // NEW: Parse custom price, or send null if they left it blank
+    const parsedCustomPrice = customPrice.trim() !== '' ? parseFloat(customPrice) : null;
+
     try {
+      // REMEMBER: Keep your Render URL here!
       const response = await fetch('https://portmanteau-project.onrender.com/api/portfolio/transaction', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId, ticker: tickerUpper, type: txType, quantity: quantity }),
+        body: JSON.stringify({ 
+            user_id: userId, 
+            ticker: tickerUpper, 
+            type: txType, 
+            quantity: quantity,
+            custom_price: parsedCustomPrice // Send the override to Node.js!
+        }),
       });
       
       const data = await response.json();
       
       if (data.status === 'success') {
-        setTxMessage(`Successfully executed ${txType} for ${quantity} shares of ${tickerUpper} at market price ($${data.executed_price})`);
-        setTicker(''); setQuantity('');
+        const priceMsg = parsedCustomPrice ? `your custom price ($${data.executed_price})` : `live market price ($${data.executed_price})`;
+        setTxMessage(`Successfully executed ${txType} for ${quantity} shares of ${tickerUpper} at ${priceMsg}`);
+        setTicker(''); setQuantity(''); setCustomPrice('');
         fetchCurrentHoldings(); 
       } else {
         setTxMessage(`${data.error}`);
@@ -116,16 +130,26 @@ export default function AddTransaction() {
             ))}
         </ScrollView>
         
-        <Text style={[styles.label, isDark && styles.darkText]}>Quantity</Text>
-        <TextInput style={[styles.input, isDark && styles.darkInput]} placeholder="0" placeholderTextColor={isDark ? '#888' : '#aaa'} value={quantity} onChangeText={setQuantity} keyboardType="numeric" />
-        
-        <Text style={styles.helperText}>* Orders are executed at the current live market price.</Text>
+        <View style={styles.row}>
+            <View style={{flex: 1, marginRight: 10}}>
+                <Text style={[styles.label, isDark && styles.darkText]}>Quantity</Text>
+                <TextInput style={[styles.input, isDark && styles.darkInput]} placeholder="0" placeholderTextColor={isDark ? '#888' : '#aaa'} value={quantity} onChangeText={setQuantity} keyboardType="numeric" />
+            </View>
+            
+            <View style={{flex: 1}}>
+                {/* NEW: Custom Price Input */}
+                <Text style={[styles.label, isDark && styles.darkText]}>Price Paid ($)</Text>
+                <TextInput style={[styles.input, isDark && styles.darkInput]} placeholder="Optional" placeholderTextColor={isDark ? '#888' : '#aaa'} value={customPrice} onChangeText={setCustomPrice} keyboardType="numeric" />
+            </View>
+        </View>
 
-        {txMessage && <Text style={[styles.message, txMessage.includes('❌') ? {color: '#e74c3c'} : {color: '#2ecc71'}]}>{txMessage}</Text>}
+        <Text style={styles.helperText}>* Leave "Price Paid" blank to automatically execute at the live market price.</Text>
+
+        {txMessage && <Text style={[styles.message, txMessage.includes('❌') || txMessage.includes('do not own') ? {color: '#e74c3c'} : {color: '#2ecc71'}]}>{txMessage}</Text>}
 
         {txLoading ? <ActivityIndicator size="large" color="#4a76a8" style={{ marginTop: 20 }} /> : (
             <TouchableOpacity style={styles.submitBtn} onPress={handleAddTransaction}>
-              <Text style={styles.submitBtnText}>Execute Market Order</Text>
+              <Text style={styles.submitBtnText}>Execute Order</Text>
             </TouchableOpacity>
         )}
       </ScrollView>
@@ -136,6 +160,7 @@ export default function AddTransaction() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  row: { flexDirection: 'row', justifyContent: 'space-between' },
   lightBg: { backgroundColor: '#f5f7fa' },
   darkBg: { backgroundColor: '#121212' },
   blueHeader: { backgroundColor: '#4a76a8', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, paddingTop: 50, paddingBottom: 20 },
@@ -146,7 +171,7 @@ const styles = StyleSheet.create({
   darkText: { color: '#f5f5f5' },
   input: { backgroundColor: '#f8f9fa', borderWidth: 1, borderColor: '#e1e4e8', padding: 15, borderRadius: 10, fontSize: 16 },
   darkInput: { backgroundColor: '#1e1e1e', borderColor: '#333', color: '#fff' },
-  helperText: { color: '#888', fontSize: 13, marginTop: 10, fontStyle: 'italic' },
+  helperText: { color: '#888', fontSize: 13, marginTop: 15, fontStyle: 'italic' },
   chipContainer: { flexDirection: 'row', marginTop: 10, marginBottom: 5, maxHeight: 40 },
   chip: { backgroundColor: '#eef2f5', paddingHorizontal: 15, paddingVertical: 8, borderRadius: 20, marginRight: 10, borderWidth: 1, borderColor: '#dcdfe3' },
   darkChip: { backgroundColor: '#2c3e50', borderColor: '#1a252f' },
