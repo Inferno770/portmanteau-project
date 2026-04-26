@@ -41,3 +41,11 @@ app-example
 /android
 
 .vscode/
+
+# Secure API Keys
+.env
+
+# Python Virtual Environments
+venv/
+.venv/
+__pycache__/
