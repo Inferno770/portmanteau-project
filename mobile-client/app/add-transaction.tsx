@@ -11,7 +11,7 @@ export default function AddTransaction() {
   const [ticker, setTicker] = useState('');
   const [txType, setTxType] = useState('BUY');
   const [quantity, setQuantity] = useState('');
-  // NEW: State for our custom price override
+  // State for custom price override
   const [customPrice, setCustomPrice] = useState(''); 
   const [txMessage, setTxMessage] = useState<string | null>(null);
   const [txLoading, setTxLoading] = useState(false);
@@ -25,7 +25,6 @@ export default function AddTransaction() {
 
   const fetchCurrentHoldings = async () => {
     try {
-      // REMEMBER: Keep your Render URL here!
       const response = await fetch('https://portmanteau-project.onrender.com/api/portfolio/summary', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId }),
       });
@@ -58,11 +57,10 @@ export default function AddTransaction() {
 
     setTxLoading(true); setTxMessage(null);
 
-    // NEW: Parse custom price, or send null if they left it blank
+    // Parse custom price, or send null if they left it blank
     const parsedCustomPrice = customPrice.trim() !== '' ? parseFloat(customPrice) : null;
 
     try {
-      // REMEMBER: Keep your Render URL here!
       const response = await fetch('https://portmanteau-project.onrender.com/api/portfolio/transaction', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

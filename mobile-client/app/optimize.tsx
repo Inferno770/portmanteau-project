@@ -7,7 +7,7 @@ import SideMenu from '../components/SideMenu';
 
 export default function OptimizeScreen() {
   const router = useRouter();
-  // Extracted theme!
+  // Extracted theme and userId from context
   const { userId, theme } = useContext(AuthContext);
   const screenWidth = Dimensions.get("window").width;
 

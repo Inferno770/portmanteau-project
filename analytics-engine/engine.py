@@ -26,7 +26,7 @@ def fetch_data(tickers):
     if isinstance(data, pd.Series):
         data = data.to_frame(name=tickers[0])
         
-    # NEW: Drop columns (tickers) that Yahoo Finance couldn't find
+    # Drop columns (tickers) that Yahoo Finance couldn't find
     data = data.dropna(axis=1, how='all')
     data = data.dropna()
     return data
@@ -36,7 +36,7 @@ def optimize_portfolio(tickers):
     if prices.empty:
         raise ValueError("Failed to fetch historical data. Check if tickers are valid.")
 
-    # NEW: Update our tickers list to ONLY include the ones Yahoo Finance successfully found
+    # Update our tickers list to ONLY include the ones Yahoo Finance successfully found
     valid_tickers = [t for t in tickers if t in prices.columns]
     
     returns = prices.pct_change().dropna()
@@ -89,7 +89,7 @@ def optimize_portfolio(tickers):
                 "y": round(target, 4)
             })
 
-    # NEW: Use valid_tickers here!
+    # Use valid_tickers here to create the allocations dictionary, ensuring we only include tickers that were successfully fetched
     allocations = {valid_tickers[i]: round(opt_weights[i] * 100, 2) for i in range(num_assets)}
 
     return {

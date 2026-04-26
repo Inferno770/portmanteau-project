@@ -8,7 +8,7 @@ import SideMenu from '../components/SideMenu';
 export default function Dashboard() {
   const router = useRouter();
   
-  // Bring in theme and currency!
+  // Brings in theme and currency
   const { userId, theme, currency } = useContext(AuthContext);
   const screenWidth = Dimensions.get("window").width;
 
@@ -72,7 +72,7 @@ export default function Dashboard() {
             {loading ? (
                 <ActivityIndicator size="small" color="#4a76a8" />
             ) : (
-                // DYNAMIC CURRENCY SYMBOL HERE!
+                // dynamic currency symbol 
                 <Text style={[styles.amount, isDark && styles.darkText]}>{currency}{totalLiveValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</Text>
             )}
             <View style={[styles.tag, isPositive ? styles.tagGreen : styles.tagRed]}>
@@ -117,11 +117,11 @@ export default function Dashboard() {
                         <View style={styles.iconPlaceholder}><Text style={styles.iconText}>{item.ticker[0]}</Text></View>
                         <View style={{flex: 1, marginLeft: 15}}>
                             <Text style={[styles.tickerText, isDark && styles.darkText]}>{item.ticker}</Text>
-                            {/* DYNAMIC CURRENCY SYMBOL HERE! */}
+                            
                             <Text style={styles.subText}>{item.shares} Shares @ {currency}{item.live_price.toFixed(2)}</Text>
                         </View>
                         <View style={{alignItems: 'flex-end'}}>
-                            {/* DYNAMIC CURRENCY SYMBOL HERE! */}
+                            
                             <Text style={[styles.tickerText, isDark && styles.darkText]}>{currency}{item.live_value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</Text>
                             <Text style={{color: itemPositive ? '#2ecc71' : '#e74c3c', fontWeight: 'bold', fontSize: 13}}>
                               {itemPositive ? '+' : ''}{item.percent_return.toFixed(2)}%

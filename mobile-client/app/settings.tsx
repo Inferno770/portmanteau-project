@@ -83,7 +83,7 @@ export default function SettingsScreen() {
       
     } catch (e: any) {
       console.error("CSV Crash Log:", e);
-      // Cross-platform error handling!
+      // Cross-platform error handling
       if (Platform.OS === 'web') {
         window.alert("Export Error: " + String(e.message || e));
       } else {
@@ -122,7 +122,7 @@ export default function SettingsScreen() {
       }
     };
 
-    // 2. The Platform Check for the Popup!
+    // 2. The Platform Check for the Popup
     if (Platform.OS === 'web') {
       // Use the browser's native confirm box
       const confirmWipe = window.confirm("DANGER ZONE\n\nAre you sure you want to permanently delete all transactions? This cannot be undone.");
