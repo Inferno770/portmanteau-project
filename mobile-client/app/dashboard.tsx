@@ -44,16 +44,15 @@ export default function Dashboard() {
 
   const chartColors = ['#4a76a8', '#2ecc71', '#f39c12', '#e74c3c', '#9b59b6', '#34495e'];
   const isDark = theme === 'dark';
-  const isPositive = totalReturn >= 0;
+  const isPositive = Number(totalReturn || 0) >= 0;
 
   const pieData = holdings.map((h, index) => ({
     name: h.ticker,
-    value: h.live_value,
+    value: Number(h.live_value || 0), // Safety net added here to ensure value is a number
     color: chartColors[index % chartColors.length],
-    legendFontColor: isDark ? "#ccc" : "#7F7F7F", // Changes legend color in dark mode!
+    legendFontColor: isDark ? "#ccc" : "#7F7F7F", 
     legendFontSize: 13
   }));
-
 
   return (
     <SafeAreaView style={[styles.container, isDark ? styles.darkBg : styles.lightBg]}>
@@ -72,12 +71,13 @@ export default function Dashboard() {
             {loading ? (
                 <ActivityIndicator size="small" color="#4a76a8" />
             ) : (
-                // dynamic currency symbol 
-                <Text style={[styles.amount, isDark && styles.darkText]}>{currency}{totalLiveValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</Text>
+                <Text style={[styles.amount, isDark && styles.darkText]}>
+                  {currency}{Number(totalLiveValue || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                </Text>
             )}
             <View style={[styles.tag, isPositive ? styles.tagGreen : styles.tagRed]}>
               <Text style={[styles.tagText, isPositive ? styles.textGreen : styles.textRed]}>
-                {isPositive ? '+' : ''}{totalReturn.toFixed(2)}%
+                {isPositive ? '+' : ''}{Number(totalReturn || 0).toFixed(2)}%
               </Text>
             </View>
           </View>
@@ -111,20 +111,29 @@ export default function Dashboard() {
                 <Text style={{textAlign: 'center', color: '#888', marginTop: 20}}>No assets found. Add a transaction!</Text>
             ) : (
                 holdings.map((item, i) => {
-                  const itemPositive = item.percent_return >= 0;
+                  // Safe math check for the color conditional
+                  const safePercentReturn = Number(item.percent_return || 0);
+                  const itemPositive = safePercentReturn >= 0;
+                  
                   return (
                     <View key={i} style={[styles.holdingCard, isDark && styles.darkCard]}>
                         <View style={styles.iconPlaceholder}><Text style={styles.iconText}>{item.ticker[0]}</Text></View>
                         <View style={{flex: 1, marginLeft: 15}}>
                             <Text style={[styles.tickerText, isDark && styles.darkText]}>{item.ticker}</Text>
                             
-                            <Text style={styles.subText}>{item.shares} Shares @ {currency}{item.live_price.toFixed(2)}</Text>
+                            {/* SAFETY NET: live_price */}
+                            <Text style={styles.subText}>{item.shares} Shares @ {currency}{Number(item.live_price || 0).toFixed(2)}</Text>
                         </View>
                         <View style={{alignItems: 'flex-end'}}>
                             
-                            <Text style={[styles.tickerText, isDark && styles.darkText]}>{currency}{item.live_value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</Text>
+                            {/* SAFETY NET: live_value */}
+                            <Text style={[styles.tickerText, isDark && styles.darkText]}>
+                              {currency}{Number(item.live_value || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                            </Text>
+                            
+                            {/* SAFETY NET: percent_return */}
                             <Text style={{color: itemPositive ? '#2ecc71' : '#e74c3c', fontWeight: 'bold', fontSize: 13}}>
-                              {itemPositive ? '+' : ''}{item.percent_return.toFixed(2)}%
+                              {itemPositive ? '+' : ''}{safePercentReturn.toFixed(2)}%
                             </Text>
                         </View>
                     </View>
