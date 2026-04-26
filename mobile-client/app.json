@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "mobile-client",
-    "slug": "mobile-client",
+    "name": "Portmanteau",
+    "slug": "Portmanteau",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
