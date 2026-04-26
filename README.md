@@ -36,39 +36,6 @@ cd mobile-client
 npm install
 npx expo start -c
 ```
-
-### Full Local Development Setup
-
-If you wish to run the entire microservice architecture locally, you must start the backend services before launching the mobile client.
-
-**1. Configuration (Environment Variables)**
-Create a `.env` file inside the `api-gateway/` folder and paste the following testing credentials:
-```text
-SUPABASE_URL=https://tgobcazuqdiqqjbtkjjr.supabase.co
-SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRnb2JjYXp1cWRpcXFqYnRrampyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NTgxOTcsImV4cCI6MjA5MjQzNDE5N30.uLEe6tZpOblSxT-Ap5MteedETz0AgJ3X-KQzRDLucDU
-JWT_SECRET=secretjwtkeyforportmanteau
-```
-
-**2. Start the Analytics Engine (Python)**
-```bash
-cd analytics-engine
-python -m venv venv
-venv\Scripts\activate  # On Mac use: source venv/bin/activate
-pip install -r requirements.txt
-python engine.py
-```
-**3. Start the API Gateway (Node.js)**
-```bash
-cd api-gateway
-npm install
-node server.js
-```
-**4. Start the Mobile Client (React Native)**
-```bash
-cd mobile-client
-npm install
-npx expo start -c
-```
 * Web: Press w in the terminal to open in your browser.
 
 ### How to Use
