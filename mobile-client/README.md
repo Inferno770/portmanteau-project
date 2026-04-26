@@ -90,3 +90,5 @@ npx expo start -c
 * **Ticker Symbols**: Cryptocurrency assets require a -USD suffix (e.g., BTC-USD) for accurate price discovery within the Yahoo Finance API.
 
 * **Historical Snapshots**: Performance history is currently calculated based on live price movements of current holdings
+
+* **API Pivot & Market Latency**: The original system architecture proposed using the **Alpha Vantage API** for live data. However, during development, it was discovered that Alpha Vantage's strict free-tier rate limits (5 requests per minute) would fatally bottleneck the multi-asset optimization engine. The architecture was successfully pivoted to use the `yfinance` library. While this solved the rate-limiting constraints, `yfinance` relies on web scraping Yahoo Finance, which can occasionally result in slight latency or "Analysis Errors" during high-volatility trading sessions.
