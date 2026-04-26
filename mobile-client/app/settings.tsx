@@ -58,7 +58,13 @@ export default function SettingsScreen() {
       // 2. Format to CSV
       let csvString = "Ticker,Shares,Total Invested,Live Value,Return %\n";
       data.holdings.forEach((h: any) => {
-        csvString += `${h.ticker},${h.shares},${h.invested_value},${h.live_value},${h.percent_return.toFixed(2)}\n`;
+        // Create safe numbers to prevent 'null' crashes or ugly CSV data
+        const safeShares = Number(h.shares || 0);
+        const safeInvested = Number(h.invested_value || 0).toFixed(2);
+        const safeLiveValue = Number(h.live_value || 0).toFixed(2);
+        const safeReturn = Number(h.percent_return || 0).toFixed(2);
+
+        csvString += `${h.ticker},${safeShares},${safeInvested},${safeLiveValue},${safeReturn}\n`;
       });
 
       // 3. Platform Specific Download
